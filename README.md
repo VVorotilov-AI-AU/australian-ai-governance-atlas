@@ -33,6 +33,10 @@ Single HTML file. No build step. No dependencies to install.
 - Custom point-in-polygon hit detection (bypasses Globe.GL raycasting limitations)
 - Vanilla JavaScript, no frameworks
 
+## Disclaimer
+
+**This is a research and educational tool, not legal advice.** All data is sourced from official government publications but may not reflect the latest amendments or interpretations. Always verify against official sources before making compliance decisions. The authors accept no liability for actions taken based on this information.
+
 ## Data Sources
 
 All governance data sourced from official state government publications, policy documents, and audit reports as of March 2026. Key sources include:
