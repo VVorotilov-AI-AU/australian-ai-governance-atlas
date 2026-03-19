@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Australian AI Governance Atlas | 3D Globe Explorer | March 2026</title>
+<meta name="description" content="Interactive 3D globe of AI governance frameworks across all 8 Australian jurisdictions. Explore, search and compare regulatory landscapes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #060b14;
+  --bg-secondary: #0c1424;
+  --bg-panel: #0f1829;
+  --bg-card: #141e32;
+  --bg-card-hover: #1a2740;
+  --border: #1c2e4a;
+  --border-light: #243752;
+  --text-primary: #e8edf5;
+  --text-secondary: #8899b4;
+  --text-muted: #5a6d8a;
+  --teal: #00d4b1;
+  --teal-dim: #00866f;
+  --teal-glow: rgba(0,212,177,0.3);
+  --amber: #f5a623;
+  --amber-dim: #b47608;
+  --amber-glow: rgba(245,166,35,0.3);
+  --grey-blue: #6b7f99;
+  --grey-blue-dim: #4a5b73;
+  --grey-blue-glow: rgba(107,127,153,0.25);
+  --red: #ef4444;
+  --red-glow: rgba(239,68,68,0.3);
+  --font-heading: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Figtree', system-ui, sans-serif;
+  --drawer-width: 420px;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --glass: rgba(12, 20, 36, 0.82);
+  --glass-border: rgba(28, 46, 74, 0.6);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%; overflow: hidden;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Globe container */
+#globeContainer {
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse at 50% 120%, rgba(0,212,177,0.03) 0%, transparent 60%),
+              var(--bg-primary);
+}
+#globeContainer canvas { display: block; }
+
+/* ===== TOP BAR ===== */
+.top-bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(180deg, rgba(6,11,20,0.95) 0%, rgba(6,11,20,0.7) 80%, transparent 100%);
+  pointer-events: none;
+}
+.top-bar > * { pointer-events: auto; }
+
+.brand {
+  flex-shrink: 0; display: flex; align-items: center; gap: 10px;
+  cursor: pointer;
+}
+.brand-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--teal) 0%, #0088cc 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800; color: #fff;
+  font-family: var(--font-heading);
+  box-shadow: 0 2px 12px var(--teal-glow);
+}
+.brand-text { display: flex; flex-direction: column; }
+.brand-title {
+  font-family: var(--font-heading); font-size: 15px; font-weight: 700;
+  color: var(--text-primary); letter-spacing: -0.3px; line-height: 1.1;
+}
+.brand-title em { font-style: normal; color: var(--teal); }
+.brand-sub {
+  font-size: 10px; color: var(--text-muted); letter-spacing: 0.8px;
+  text-transform: uppercase; line-height: 1.2;
+}
+
+/* Search */
+.search-box { flex: 0 1 340px; position: relative; }
+.search-input {
+  width: 100%; padding: 9px 14px 9px 36px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text-primary);
+  font-family: var(--font-body); font-size: 13px;
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-input::placeholder { color: var(--text-muted); }
+.search-input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(0,212,177,0.1);
+}
+.search-icon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--text-muted); font-size: 14px; pointer-events: none;
+}
+
+/* Filter chips */
+.filters { display: flex; gap: 6px; flex-shrink: 0; }
+.chip {
+  padding: 6px 14px; border-radius: 8px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  color: var(--text-secondary); font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+  text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+}
+.chip:hover { border-color: var(--text-muted); color: var(--text-primary); }
+.chip.active { border-color: var(--teal); color: var(--teal); background: rgba(0,212,177,0.08); }
+.chip.active[data-filter="amber"] { border-color: var(--amber); color: var(--amber); background: rgba(245,166,35,0.08); }
+.chip.active[data-filter="grey"] { border-color: var(--grey-blue); color: var(--grey-blue); background: rgba(107,127,153,0.08); }
+
+.top-spacer { flex: 1; }
+
+/* Compare button */
+.compare-btn {
+  padding: 8px 16px; border-radius: 8px;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-secondary); font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  font-family: var(--font-body);
+}
+.compare-btn:hover { border-color: var(--text-muted); color: var(--text-primary); }
+.compare-btn.active { border-color: var(--amber); color: var(--amber); background: rgba(245,166,35,0.08); }
+
+/* ===== STATS STRIP ===== */
+.stats-strip {
+  position: fixed; top: 56px; left: 16px; z-index: 80;
+  display: flex; gap: 8px;
+  animation: fadeIn 0.6s ease-out 0.4s both;
+}
+.stat-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 8px;
+  background: var(--glass); border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px); font-size: 11px;
+}
+.stat-num {
+  font-family: var(--font-heading); font-weight: 800; font-size: 16px;
+  line-height: 1;
+}
+.stat-num.teal { color: var(--teal); }
+.stat-num.amber { color: var(--amber); }
+.stat-num.red { color: var(--red); }
+.stat-label { color: var(--text-muted); line-height: 1.2; }
+
+/* ===== TIMELINE BAR ===== */
+.timeline-bar {
+  position: fixed; top: 56px; right: 16px; z-index: 80;
+  display: flex; gap: 4px; align-items: stretch;
+  padding: 8px 12px; border-radius: 10px;
+  background: var(--glass); border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  transition: right 0.4s var(--ease);
+  animation: fadeIn 0.6s ease-out 0.5s both;
+}
+.timeline-bar.shifted { right: calc(var(--drawer-width) + 16px); }
+.tl-item {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; padding: 4px 10px; border-radius: 6px;
+  transition: background 0.2s; min-width: 90px;
+}
+.tl-item:hover { background: rgba(255,255,255,0.03); }
+.tl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.tl-dot.urgent { background: var(--red); box-shadow: 0 0 8px var(--red-glow); }
+.tl-dot.soon { background: var(--amber); }
+.tl-dot.later { background: var(--grey-blue); }
+.tl-date { font-size: 10px; font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+.tl-text { font-size: 9px; color: var(--text-muted); text-align: center; line-height: 1.3; }
+
+/* ===== CROSS BORDER CHIP ===== */
+.cross-border-chip {
+  position: fixed; top: 102px; left: 16px; z-index: 80;
+  max-width: 300px; padding: 10px 14px; border-radius: 10px;
+  background: linear-gradient(135deg, rgba(245,166,35,0.06), rgba(245,166,35,0.02));
+  border: 1px solid rgba(245,166,35,0.18);
+  backdrop-filter: blur(12px);
+  animation: fadeIn 0.6s ease-out 0.6s both;
+}
+.cross-border-chip h4 {
+  font-family: var(--font-heading); font-size: 11px; font-weight: 700;
+  color: var(--amber); margin-bottom: 3px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.cross-border-chip p { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+
+/* ===== LEGEND ===== */
+.legend {
+  position: fixed; bottom: 16px; left: 16px; z-index: 90;
+  display: flex; gap: 16px; padding: 10px 16px;
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: 10px; backdrop-filter: blur(12px);
+  animation: fadeIn 0.6s ease-out 0.3s both;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--text-secondary);
+}
+.legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+.legend-dot.green { background: var(--teal); }
+.legend-dot.amber { background: var(--amber); }
+.legend-dot.grey { background: var(--grey-blue); }
+
+/* ===== TOOLTIP ===== */
+.tooltip {
+  position: fixed; z-index: 300;
+  background: var(--bg-card); border: 1px solid var(--border-light);
+  border-radius: 12px; padding: 14px 18px;
+  pointer-events: none; opacity: 0;
+  transform: translateY(6px) scale(0.97);
+  transition: opacity 0.15s, transform 0.15s var(--ease-bounce);
+  max-width: 300px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  backdrop-filter: blur(16px);
+}
+.tooltip.visible { opacity: 1; transform: translateY(0) scale(1); }
+.tooltip h3 {
+  font-family: var(--font-heading); font-size: 15px; font-weight: 700;
+  margin-bottom: 6px;
+}
+.tooltip .tip-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.tooltip .badge {
+  display: inline-block; padding: 2px 10px; border-radius: 4px;
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.tooltip .badge.mandatory { background: rgba(0,212,177,0.15); color: var(--teal); }
+.tooltip .badge.advisory { background: rgba(107,127,153,0.15); color: var(--grey-blue); }
+.tooltip .maturity-pip {
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--text-muted);
+}
+.tooltip .distinction { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.tooltip .tip-hint {
+  margin-top: 8px; font-size: 10px; color: var(--text-muted);
+  border-top: 1px solid var(--border); padding-top: 6px;
+}
+
+/* ===== DETAIL DRAWER ===== */
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: var(--drawer-width); z-index: 200;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border);
+  transform: translateX(100%);
+  transition: transform 0.4s var(--ease);
+  overflow-y: auto; overflow-x: hidden;
+  box-shadow: -12px 0 50px rgba(0,0,0,0.4);
+}
+.drawer.open { transform: translateX(0); }
+.drawer::-webkit-scrollbar { width: 5px; }
+.drawer::-webkit-scrollbar-track { background: transparent; }
+.drawer::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.drawer-header {
+  position: sticky; top: 0; z-index: 10;
+  background: linear-gradient(180deg, var(--bg-secondary) 85%, transparent);
+  padding: 16px 20px 20px; display: flex; align-items: flex-start; justify-content: space-between;
+}
+.drawer-close {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  color: var(--text-secondary); cursor: pointer;
+  font-size: 18px; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; flex-shrink: 0;
+}
+.drawer-close:hover { border-color: var(--teal); color: var(--teal); }
+.drawer-body { padding: 0 20px 32px; }
+.drawer-title {
+  font-family: var(--font-heading); font-size: 22px; font-weight: 800;
+  letter-spacing: -0.5px; margin-bottom: 10px; line-height: 1.2;
+}
+.drawer-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.d-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 12px; border-radius: 6px;
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.d-badge.mandatory { background: rgba(0,212,177,0.12); color: var(--teal); border: 1px solid rgba(0,212,177,0.25); }
+.d-badge.advisory { background: rgba(107,127,153,0.12); color: var(--grey-blue); border: 1px solid rgba(107,127,153,0.25); }
+.d-badge.high { background: rgba(0,212,177,0.08); color: var(--teal); border: 1px solid rgba(0,212,177,0.2); }
+.d-badge.medium, .d-badge.low-medium { background: rgba(245,166,35,0.08); color: var(--amber); border: 1px solid rgba(245,166,35,0.2); }
+.d-badge.low { background: rgba(107,127,153,0.08); color: var(--grey-blue); border: 1px solid rgba(107,127,153,0.2); }
+
+.d-section { margin-bottom: 18px; }
+.d-section h3 {
+  font-family: var(--font-heading); font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--text-muted); margin-bottom: 8px;
+  padding-bottom: 6px; border-bottom: 1px solid var(--border);
+}
+.d-section p, .d-section li { font-size: 13px; line-height: 1.6; color: var(--text-secondary); }
+.d-section ul { list-style: none; }
+.d-section ul li { padding-left: 16px; position: relative; margin-bottom: 4px; }
+.d-section ul li::before {
+  content: ''; position: absolute; left: 0; top: 9px;
+  width: 5px; height: 5px; border-radius: 1px;
+  background: var(--teal); opacity: 0.4;
+}
+.d-section .bold-text { font-weight: 600; color: var(--text-primary); }
+.d-section .sub-text { display: block; margin-top: 2px; color: var(--text-muted); font-size: 12px; }
+
+.d-callout { border-radius: 8px; padding: 12px 14px; margin-top: 8px; }
+.d-callout.red { background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2); }
+.d-callout.green { background: rgba(0,212,177,0.05); border: 1px solid rgba(0,212,177,0.15); }
+.d-callout .callout-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+  font-weight: 600; margin-bottom: 3px;
+}
+.d-callout.red .callout-label { color: var(--red); }
+.d-callout.green .callout-label { color: var(--teal); }
+.d-callout .callout-value { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+
+.d-links { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.d-links a {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--teal); text-decoration: none;
+  font-size: 12px; font-weight: 500; transition: opacity 0.2s;
+}
+.d-links a:hover { opacity: 0.7; }
+.d-disclaimer {
+  margin-top: 20px; padding: 12px;
+  background: rgba(107,127,153,0.06); border-radius: 8px;
+  font-size: 11px; color: var(--text-muted); line-height: 1.5;
+}
+
+/* ===== COMPARISON PANEL ===== */
+.compare-panel {
+  position: fixed; inset: 60px 20px 20px 20px; z-index: 250;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden;
+  display: none; flex-direction: column;
+  box-shadow: 0 20px 80px rgba(0,0,0,0.6);
+  backdrop-filter: blur(20px);
+}
+.compare-panel.visible { display: flex; }
+.compare-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 24px; border-bottom: 1px solid var(--border);
+}
+.compare-header h2 { font-family: var(--font-heading); font-size: 18px; font-weight: 700; }
+.compare-close {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  color: var(--text-secondary); cursor: pointer;
+  font-size: 18px; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.compare-close:hover { border-color: var(--teal); color: var(--teal); }
+.compare-body {
+  flex: 1; overflow-y: auto; padding: 20px 24px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+}
+.compare-col { display: flex; flex-direction: column; gap: 16px; }
+.compare-col h3 {
+  font-family: var(--font-heading); font-size: 20px; font-weight: 700;
+  padding-bottom: 8px; border-bottom: 2px solid var(--border);
+}
+
+/* ===== FEDERAL OVERLAY ===== */
+.federal-overlay {
+  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+  z-index: 90; display: flex; gap: 8px; align-items: center;
+}
+.federal-toggle {
+  padding: 9px 18px; border-radius: 10px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  color: var(--text-primary); cursor: pointer;
+  font-family: var(--font-heading); font-size: 12px; font-weight: 600;
+  letter-spacing: 0.3px; transition: all 0.2s;
+  display: flex; align-items: center; gap: 8px;
+}
+.federal-toggle:hover { border-color: var(--teal); }
+.federal-toggle .arrow { font-size: 10px; transition: transform 0.3s; }
+.federal-toggle.expanded .arrow { transform: rotate(180deg); }
+
+.federal-cards {
+  position: fixed; bottom: 60px; left: 16px; right: 16px; z-index: 85;
+  display: none; gap: 10px; padding: 16px;
+  background: var(--glass); border: 1px solid var(--border);
+  border-radius: 14px; backdrop-filter: blur(16px);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+}
+.federal-cards.visible {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+.f-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px;
+  transition: border-color 0.2s;
+}
+.f-card:hover { border-color: var(--border-light); }
+.f-card .year {
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 4px; color: var(--teal);
+}
+.f-card .year.red { color: var(--red); }
+.f-card h4 {
+  font-family: var(--font-heading); font-size: 12px; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 4px;
+}
+.f-card p { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+
+/* ===== GLOBE CONTROLS ===== */
+.globe-controls {
+  position: fixed; bottom: 80px; right: 16px; z-index: 90;
+  display: flex; flex-direction: column; gap: 2px;
+  transition: right 0.4s var(--ease);
+}
+.globe-controls.shifted { right: calc(var(--drawer-width) + 16px); }
+.ctrl-btn {
+  width: 40px; height: 40px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  color: var(--text-primary); cursor: pointer;
+  font-size: 18px; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; font-family: var(--font-body);
+}
+.ctrl-btn:first-child { border-radius: 8px 8px 0 0; }
+.ctrl-btn:last-child { border-radius: 0 0 8px 8px; }
+.ctrl-btn:hover { background: var(--bg-card-hover); border-color: var(--teal); color: var(--teal); }
+
+.reset-btn {
+  position: fixed; bottom: 28px; right: 16px; z-index: 90;
+  padding: 8px 14px; border-radius: 8px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  color: var(--text-secondary); cursor: pointer;
+  font-size: 11px; font-weight: 600; font-family: var(--font-body);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  transition: all 0.2s, right 0.4s var(--ease);
+}
+.reset-btn.shifted { right: calc(var(--drawer-width) + 16px); }
+.reset-btn:hover { border-color: var(--teal); color: var(--teal); }
+
+/* ===== FOOTER ===== */
+.footer {
+  position: fixed; bottom: 2px; right: 16px; z-index: 30;
+  font-size: 9px; color: var(--text-muted); opacity: 0.5;
+}
+.footer a { color: var(--text-muted); text-decoration: underline; }
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+.top-bar { animation: slideDown 0.5s var(--ease) both; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+  .stats-strip { flex-wrap: wrap; }
+  .timeline-bar { display: none; }
+}
+@media (max-width: 900px) {
+  :root { --drawer-width: 100vw; }
+  .filters { display: none; }
+  .compare-btn { display: none; }
+  .cross-border-chip { display: none; }
+  .brand-text { display: none; }
+  .compare-body { grid-template-columns: 1fr; }
+  .stats-strip { top: 50px; gap: 4px; }
+  .stat-pill { padding: 4px 10px; }
+}
+@media (max-width: 600px) {
+  .search-box { flex: 1; }
+  .top-bar { padding: 8px 10px; gap: 8px; }
+  .stats-strip { display: none; }
+}
+
+/* Compare hint */
+.compare-hint {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 150; padding: 12px 24px; border-radius: 10px;
+  background: rgba(245,166,35,0.12); border: 1px solid rgba(245,166,35,0.3);
+  color: var(--amber); font-family: var(--font-heading); font-size: 14px;
+  font-weight: 600; pointer-events: none; display: none;
+  animation: fadeIn 0.3s ease-out;
+}
+.compare-hint.visible { display: block; }
+</style>
+</head>
+<body>
+
+<!-- Globe Container -->
+<div id="globeContainer"></div>
+
+<!-- Top Bar -->
+<div class="top-bar" id="topBar">
+  <div class="brand" id="brandBtn" title="Reset view">
+    <div class="brand-icon">AI</div>
+    <div class="brand-text">
+      <div class="brand-title">Australian <em>AI Governance</em> Atlas</div>
+      <div class="brand-sub">3D Explorer &middot; 8 Jurisdictions &middot; March 2026</div>
+    </div>
+  </div>
+  <div class="search-box">
+    <span class="search-icon">&#128269;</span>
+    <input class="search-input" id="searchInput" type="text"
+           placeholder="Search jurisdictions, frameworks, keywords..." autocomplete="off">
+  </div>
+  <div class="filters" id="filters">
+    <button class="chip" data-filter="green">Mandatory + Mature</button>
+    <button class="chip" data-filter="amber">Mandatory, Narrower</button>
+    <button class="chip" data-filter="grey">Advisory / Emerging</button>
+  </div>
+  <div class="top-spacer"></div>
+  <button class="compare-btn" id="compareBtn">&#9878; Compare</button>
+</div>
+
+<!-- Stats Strip -->
+<div class="stats-strip" id="statsStrip">
+  <div class="stat-pill"><span class="stat-num teal">8</span><span class="stat-label">Jurisdictions</span></div>
+  <div class="stat-pill"><span class="stat-num teal">6</span><span class="stat-label">Mandatory</span></div>
+  <div class="stat-pill"><span class="stat-num red">3</span><span class="stat-label">Urgent Deadlines</span></div>
+  <div class="stat-pill"><span class="stat-num amber">!</span><span class="stat-label">Cross-border gap</span></div>
+</div>
+
+<!-- Cross-border chip -->
+<div class="cross-border-chip" id="crossChip">
+  <h4>Cross-Border Gap</h4>
+  <p>Companies operating across state borders face different AI compliance requirements in each jurisdiction. No formal harmonisation mechanism exists.</p>
+</div>
+
+<!-- Timeline bar -->
+<div class="timeline-bar" id="timelineBar">
+  <div class="tl-item">
+    <div class="tl-dot urgent"></div>
+    <div class="tl-date">30 Jun 2026</div>
+    <div class="tl-text">NSW AI policy deadline</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-dot urgent"></div>
+    <div class="tl-date">Jul 2026</div>
+    <div class="tl-text">Federal CAIO deadline</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-dot soon"></div>
+    <div class="tl-date">Aug 2026</div>
+    <div class="tl-text">EU AI Act applies</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-dot later"></div>
+    <div class="tl-date">Q4 2026</div>
+    <div class="tl-text">Federal guardrails review</div>
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip">
+  <h3 id="tipTitle"></h3>
+  <div class="tip-row">
+    <div class="badge" id="tipBadge"></div>
+    <div class="maturity-pip" id="tipMaturity"></div>
+  </div>
+  <div class="distinction" id="tipDistinction"></div>
+  <div class="tip-hint">Click to explore jurisdiction details</div>
+</div>
+
+<!-- Detail Drawer -->
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <span style="font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted)">Jurisdiction Detail</span>
+    <button class="drawer-close" id="drawerClose">&times;</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</div>
+
+<!-- Comparison Panel -->
+<div class="compare-panel" id="comparePanel">
+  <div class="compare-header">
+    <h2>&#9878; Side-by-Side Comparison</h2>
+    <button class="compare-close" id="compareClose">&times;</button>
+  </div>
+  <div class="compare-body" id="compareBody"></div>
+</div>
+
+<!-- Compare Hint -->
+<div class="compare-hint" id="compareHint">Click two jurisdictions on the globe to compare</div>
+
+<!-- Globe Controls -->
+<div class="globe-controls" id="globeControls">
+  <button class="ctrl-btn" id="zoomIn" title="Zoom in">+</button>
+  <button class="ctrl-btn" id="zoomOut" title="Zoom out">&minus;</button>
+</div>
+<button class="reset-btn" id="resetBtn" title="Reset to Australia view">&#8634; Reset View</button>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot green"></div>Mandatory + Mature</div>
+  <div class="legend-item"><div class="legend-dot amber"></div>Mandatory, Narrower</div>
+  <div class="legend-item"><div class="legend-dot grey"></div>Advisory / Emerging</div>
+</div>
+
+<!-- Federal Overlay -->
+<div class="federal-overlay" id="federalOverlay">
+  <button class="federal-toggle" id="federalToggle">
+    <span>Commonwealth / Federal Frameworks</span>
+    <span class="arrow">&#9650;</span>
+  </button>
+</div>
+<div class="federal-cards" id="federalCards">
+  <div class="f-card">
+    <div class="year">November 2019</div>
+    <h4>8 AI Ethics Principles</h4>
+    <p>Voluntary. Core reference adopted by all states. Covers human rights, fairness, transparency, accountability, reliability, privacy, contestability, oversight.</p>
+  </div>
+  <div class="f-card">
+    <div class="year">June 2024</div>
+    <h4>National AI Assurance Framework</h4>
+    <p>Harmonisation across government levels. Not binding on private sector. Guides risk assessment alignment.</p>
+  </div>
+  <div class="f-card">
+    <div class="year">September 2024</div>
+    <h4>Voluntary AI Safety Standard</h4>
+    <p>10 guardrails for AI development. Voluntary but signals future regulatory direction for high-risk AI.</p>
+  </div>
+  <div class="f-card">
+    <div class="year">December 2025</div>
+    <h4>National AI Plan</h4>
+    <p>Mandatory guardrails dropped after pushback. Relies on existing laws, voluntary frameworks, AI Safety Institute ($29.9M). CAIO deadline: July 2026.</p>
+  </div>
+  <div class="f-card">
+    <div class="year">Legacy</div>
+    <h4>Robodebt Lessons</h4>
+    <p>5 governance failures shaped every current framework: no legal basis, removed human oversight, flawed algorithm, suppressed concerns, no accountability.</p>
+  </div>
+  <div class="f-card">
+    <div class="year red">August 2026</div>
+    <h4>EU AI Act (Extraterritorial)</h4>
+    <p>Article 2 high-risk obligations enforceable on AU companies serving EU markets. Penalties up to EUR 35M / 7% global turnover.</p>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  Inspired by Josh Tedjasaputra / CX Insight. Research &amp; build by Vladimir Vorotilov.
+  <a href="https://linkedin.com/in/vladimir-vorotilov" target="_blank" rel="noopener">LinkedIn</a>
+</div>
+
+<script src="https://unpkg.com/globe.gl"></script>
+<script>
+
+// ==================== DATA ====================
+const STATES = {
+  WA: {
+    name: 'Western Australia',
+    framework: 'WA Government AI Policy and Assurance Framework',
+    date: 'November 2024',
+    lead: 'Office of Digital Government (DGov), Dept of Premier and Cabinet',
+    status: 'mandatory', maturity: 'high', tier: 'green',
+    scope: 'All WA Government agencies including existing and off-the-shelf AI systems.',
+    distinction: 'No exemptions for off-the-shelf or existing AI. Strictest retroactive coverage nationally.',
+    mechanism: [
+      'Self-assessment against 5 ethics principles',
+      'Mid-range+ risk or >$5M projects escalate to AI Advisory Board (7 members, operational Jun 2025)',
+      'No exemptions for off-the-shelf or existing AI systems',
+    ],
+    privateSector: 'Indirect via procurement. Vendors not meeting WA standards are excluded from government panels.',
+    funding: null, deadlines: [],
+    boardNote: 'Alex Jenkins (WADSIH/Curtin) is a member of the AI Advisory Board.',
+    links: [{ label: 'DGov AI Policy', url: 'https://www.wa.gov.au/organisation/department-of-the-premier-and-cabinet/office-of-digital-government' }],
+    keywords: ['procurement', 'retroactive', 'off-the-shelf', 'DGov', 'advisory board'],
+  },
+  NT: {
+    name: 'Northern Territory',
+    framework: 'NT Government AI Assurance Framework + AI Policy',
+    date: 'November 2025',
+    lead: 'Dept of Corporate and Digital Development, Digital Territory',
+    status: 'mandatory', maturity: 'low-medium', tier: 'amber',
+    scope: 'NTG public sector only. No direct private sector mandate.',
+    distinction: 'Government-only scope with smallest talent pool nationally. Strong focus on remote health, agriculture, defence, and transport.',
+    mechanism: [
+      '5 ethics principles alignment',
+      'Risk-based tiers: low = agency decision, medium/high = AI advisory service review',
+      'Mandatory for all NTG officers using or procuring AI',
+    ],
+    privateSector: 'No direct mandate. Government procurement may set indirect standards.',
+    funding: null, deadlines: [],
+    correction: 'Note: Some sources cite June 2024 for the NT framework. June 2024 is the National framework date. The NT-specific framework was published November 2025.',
+    links: [{ label: 'Digital Territory', url: 'https://digitalterritory.nt.gov.au/' }],
+    keywords: ['remote', 'health', 'agriculture', 'defence', 'transport', 'talent'],
+  },
+  SA: {
+    name: 'South Australia',
+    framework: 'Guideline 13.1 (GenAI/LLM) + Office for AI + AI Strategy (under development)',
+    date: 'Office for AI operational 2025. Guideline 13.1 pre-2025.',
+    lead: 'Office for AI, Dept of Treasury and Finance. Director: Peter Meere (appointed Oct 2025).',
+    status: 'advisory', maturity: 'medium', tier: 'grey',
+    scope: 'All SA Government agencies. Office covers healthcare, policing, social services, public admin.',
+    distinction: 'Advisory status but the most funded AI ecosystem at state level. AIML partnership with CSIRO since 2018.',
+    mechanism: [
+      'Guideline-based (not mandatory yet)',
+      'Office for AI provides central coordination',
+      'AI Strategy launch expected 2026 (inaugural)',
+    ],
+    privateSector: 'SME grants via Australian Institute for Machine Learning (AIML, to 2028). Active VC ecosystem.',
+    funding: '$28M AI Program + $20M RAIR Centre (CSIRO + Uni Adelaide) + $326.5M Digital Investment Fund (AI stream)',
+    deadlines: [{ label: '2026', text: 'Inaugural SA Government AI Strategy launch' }],
+    links: [{ label: 'SA Office for AI', url: 'https://ai.sa.gov.au/' }],
+    keywords: ['AIML', 'CSIRO', 'VC', 'funding', 'healthcare', 'guideline'],
+  },
+  QLD: {
+    name: 'Queensland',
+    framework: 'AI Governance Policy (QGEA) + FAIRA Framework + FAIRA Guideline',
+    date: 'September 2024',
+    lead: 'Chief Digital Service Branch, Dept of Customer Services',
+    status: 'mandatory', maturity: 'high', tier: 'green',
+    scope: 'All QLD Government entities under Public Sector Act 2022.',
+    distinction: 'Only state nationally mandating ISO 38507 alignment. QAO audit (Sep 2025) found governance gaps.',
+    mechanism: [
+      'FAIRA risk assessment: components analysis + values assessment',
+      'ISO 38507 mandated (only state nationally)',
+      'Risk reviews at lifecycle transitions',
+    ],
+    privateSector: 'Government procurement standards. IndustryTech Fund supports private sector AI adoption.',
+    funding: 'Advance Queensland $650M overall. IndustryTech Fund $15M. Quantum Strategy $89.7M.',
+    deadlines: [],
+    auditNote: 'QAO Sep 2025 audit found governance gaps. TMR flagged for deploying AI traffic cameras without completing ethical risk assessments.',
+    links: [{ label: 'QLD AI Governance (QGEA)', url: 'https://www.forgov.qld.gov.au/information-technology/queensland-government-enterprise-architecture-qgea/qgea-directions-and-guidance/artificial-intelligence' }],
+    keywords: ['ISO 38507', 'FAIRA', 'audit', 'QAO', 'quantum'],
+  },
+  NSW: {
+    name: 'New South Wales',
+    framework: 'NSW AI Assessment Framework (AIAF), Circular DCS-2024-04',
+    date: 'July 2024 (3rd iteration, first published 2022)',
+    lead: 'NSW Office for AI (est. Sep 2025), Digital NSW, Dept of Customer Service',
+    status: 'mandatory', maturity: 'high', tier: 'green',
+    scope: 'All NSW Government agencies. GenAI auto-classified as elevated risk.',
+    distinction: 'Most mature framework nationally with hard compliance deadlines. 30 June 2026 deadline for AI policy, governance, and supply chain risk management.',
+    mechanism: [
+      'Gate-based 16-question risk assessment',
+      'Low-risk assessments completed in under 30 minutes',
+      'High/Critical risk escalates to AI Review Committee (AIRC, chaired by Edward Santow)',
+      'GenAI auto-classified as elevated risk',
+    ],
+    privateSector: 'AI Procurement Essentials + Australian Govt Model Clauses (17 Mar 2025). Vendors must meet published standards to contract with NSW government.',
+    funding: '$20M emerging tech commercialisation, $3M Early Adopter Grants, $6M MVP Ventures',
+    deadlines: [{ label: '30 June 2026', text: 'AI policy, governance framework, central AI inventory, supply chain risk management must be in place' }],
+    links: [{ label: 'NSW AI Assessment Framework', url: 'https://www.digital.nsw.gov.au/policy/artificial-intelligence' }],
+    keywords: ['AIAF', 'Edward Santow', 'GenAI', 'procurement', 'deadline', 'inventory'],
+  },
+  ACT: {
+    name: 'Australian Capital Territory',
+    framework: 'ACT Government AI Policy (v1.0, May 2025) + ACT AI Assurance Framework',
+    date: 'May 2025',
+    lead: 'Data, AI and Digital Records Branch, CMTEDD. AI Advisory Group (AIGG) oversight.',
+    status: 'mandatory', maturity: 'medium', tier: 'amber',
+    scope: 'All ACT Government directorates. Standard commercial AI use is exempt (opposite of WA approach).',
+    distinction: 'Strongest human rights anchor nationally. Backed by Human Rights Act 2004 and Information Privacy Act 2014.',
+    mechanism: [
+      'Self-assessment tool for AI risk',
+      'Medium/high-risk projects referred to AIGG for review',
+      'Standard commercial AI exempt from full assessment',
+    ],
+    privateSector: 'No direct mandate. Human Rights Act 2004 provides broader legal context for AI use affecting individuals.',
+    funding: null, deadlines: [],
+    links: [{ label: 'Digital Canberra', url: 'https://www.act.gov.au/directorates-and-agencies/digital-canberra' }],
+    keywords: ['human rights', 'AIGG', 'privacy', 'exempt', 'commercial'],
+  },
+  VIC: {
+    name: 'Victoria',
+    framework: 'Administrative Guideline for Safe and Responsible Use of GenAI in VPS',
+    date: 'November 2024 (endorsed Sep 2024 by Secretaries Board). AI Mission Statement: Jan 2026.',
+    lead: 'Dept of Premier and Cabinet, Victorian Secretaries Board',
+    status: 'mandatory', maturity: 'high', tier: 'green',
+    scope: 'All VPS bodies under Public Administration Act 2004 AND state-funded organisations (health, housing, education).',
+    distinction: 'Strongest VC/funding ecosystem for AI in Australia. $2.2B raised in 2025 across 134 deals, overtaking NSW.',
+    mechanism: [
+      'Local policies must meet or exceed the administrative guideline',
+      'Approval processes for agency-approved AI tools',
+      'GenAI cannot be used for decisions impacting individuals',
+      'Extends to state-funded private organisations',
+    ],
+    privateSector: 'State-funded private organisations captured by the guideline. OVIC enterprise GenAI guidance (Feb 2025). Strongest VC ecosystem nationally.',
+    funding: '$2.2B VC raised in 2025 (134 deals). Breakthrough Victoria $75M into 5 VC funds. LaunchVic $400K grants. $14M AI budget 2025-26.',
+    deadlines: [],
+    links: [{ label: 'VIC GenAI Guidance (VPS)', url: 'https://www.vic.gov.au/guidance-safe-responsible-use-gen-ai-vps' }],
+    keywords: ['VPS', 'VC', 'funding', 'GenAI', 'OVIC', 'state-funded'],
+  },
+  TAS: {
+    name: 'Tasmania',
+    framework: 'Guidance for AI in Tasmanian Government (v1.4, July 2024) + AI Island Strategy (announced Nov 2025)',
+    date: 'July 2024 (guidance). AI Island Strategy draft due H1 2026.',
+    lead: 'DDC AI Working Group (guidance). Dept of State Growth (strategy).',
+    status: 'advisory', maturity: 'low', tier: 'grey',
+    scope: 'Tasmanian Government agencies (guidance). Broader economic scope planned via AI Island Strategy.',
+    distinction: 'Least developed framework nationally. Federal framework serves as primary reference. AI Island Strategy aims to leverage TDB loan book for business AI adoption.',
+    mechanism: [
+      'Guidance document (not mandatory)',
+      'Federal framework used as primary reference',
+      'AI Island Strategy under development with TDB loan book',
+      'Legislative review of Tasmanian Development Act 1983 underway',
+    ],
+    privateSector: 'AI Island Strategy targets business AI adoption via loans. No current regulatory mandate.',
+    funding: null,
+    deadlines: [{ label: 'H1 2026', text: 'AI Island Strategy draft expected' }],
+    links: [{ label: 'Tasmanian Government', url: 'https://www.tas.gov.au/' }],
+    keywords: ['AI Island', 'TDB', 'loans', 'guidance'],
+  },
+};
+
+// ==================== GEOJSON ====================
+const GEO = {
+  type: "FeatureCollection",
+  features: [
+    {
+      type: "Feature",
+      properties: { id: "WA", name: "Western Australia", shortName: "WA" },
+      geometry: { type: "Polygon", coordinates: [[
+        [112.8,-35.1],[113.8,-32.5],[115.2,-29.2],[116.1,-24.7],[114.8,-20.3],
+        [116.8,-15.5],[121.0,-13.8],[129.0,-13.8],[129.0,-35.1],[120.8,-35.1],
+        [117.0,-34.5],[114.0,-34.9],[112.8,-35.1]
+      ]]}
+    },
+    {
+      type: "Feature",
+      properties: { id: "NT", name: "Northern Territory", shortName: "NT" },
+      geometry: { type: "Polygon", coordinates: [[
+        [129.0,-25.9],[129.0,-11.0],[135.2,-13.0],[138.0,-11.0],
+        [138.0,-26.0],[129.0,-25.9]
+      ]]}
+    },
+    {
+      type: "Feature",
+      properties: { id: "SA", name: "South Australia", shortName: "SA" },
+      geometry: { type: "Polygon", coordinates: [[
+        [129.0,-38.1],[129.0,-26.0],[141.0,-26.0],[141.0,-38.1],
+        [137.6,-35.3],[133.6,-34.7],[129.0,-38.1]
+      ]]}
+    },
+    {
+      type: "Feature",
+      properties: { id: "QLD", name: "Queensland", shortName: "QLD" },
+      geometry: { type: "Polygon", coordinates: [[
+        [138.0,-29.2],[138.0,-10.7],[142.0,-10.7],[145.0,-11.5],
+        [149.0,-17.5],[153.6,-28.2],[153.6,-29.2],[138.0,-29.2]
+      ]]}
+    },
+    {
+      type: "Feature",
+      properties: { id: "NSW", name: "New South Wales", shortName: "NSW" },
+      geometry: { type: "Polygon", coordinates: [[
+        [141.0,-37.5],[141.0,-28.1],[153.6,-28.1],[153.6,-37.5],
+        [149.8,-36.8],[146.7,-37.2],[141.0,-37.5]
+      ]]}
+    },
+    {
+      type: "Feature",
+      properties: { id: "ACT", name: "Australian Capital Territory", shortName: "ACT" },
+      geometry: { type: "Polygon", coordinates: [[
+        [148.4,-36.15],[149.7,-36.15],[149.7,-34.85],
+        [148.4,-34.85],[148.4,-36.15]
+      ]]}
+    },
+    {
+      type: "Feature",
+      properties: { id: "VIC", name: "Victoria", shortName: "VIC" },
+      geometry: { type: "Polygon", coordinates: [[
+        [141.0,-39.3],[141.0,-34.0],[146.5,-34.0],[149.8,-37.5],
+        [149.9,-39.3],[145.6,-39.0],[141.0,-39.3]
+      ]]}
+    },
+    {
+      type: "Feature",
+      properties: { id: "TAS", name: "Tasmania", shortName: "TAS" },
+      geometry: { type: "Polygon", coordinates: [[
+        [144.6,-43.8],[145.5,-41.4],[147.0,-40.6],[148.7,-41.1],
+        [149.2,-42.7],[147.8,-43.8],[145.6,-43.9],[144.6,-43.8]
+      ]]}
+    }
+  ]
+};
+
+// Enrich GeoJSON with governance data
+GEO.features.forEach(function(f) {
+  var s = STATES[f.properties.id];
+  if (s) {
+    f.properties.tier = s.tier;
+    f.properties.status = s.status;
+    f.properties.maturity = s.maturity;
+    f.properties.distinction = s.distinction;
+    f.properties.fullName = s.name;
+  }
+});
+
+// Capital city markers
+const CAPITALS = [
+  { id: 'WA', name: 'Perth', lat: -31.95, lng: 115.86 },
+  { id: 'NT', name: 'Darwin', lat: -12.46, lng: 130.84 },
+  { id: 'SA', name: 'Adelaide', lat: -34.93, lng: 138.60 },
+  { id: 'QLD', name: 'Brisbane', lat: -27.47, lng: 153.03 },
+  { id: 'NSW', name: 'Sydney', lat: -33.87, lng: 151.21 },
+  { id: 'ACT', name: 'Canberra', lat: -35.28, lng: 149.13 },
+  { id: 'VIC', name: 'Melbourne', lat: -37.81, lng: 144.96 },
+  { id: 'TAS', name: 'Hobart', lat: -42.88, lng: 147.33 },
+];
+
+// State label positions
+const STATE_LABELS = [
+  { id: 'WA', lat: -26, lng: 122, label: 'WA' },
+  { id: 'NT', lat: -19, lng: 133.5, label: 'NT' },
+  { id: 'SA', lat: -31, lng: 135, label: 'SA' },
+  { id: 'QLD', lat: -22, lng: 146, label: 'QLD' },
+  { id: 'NSW', lat: -32.5, lng: 147, label: 'NSW' },
+  { id: 'ACT', lat: -35.5, lng: 149.05, label: 'ACT' },
+  { id: 'VIC', lat: -37, lng: 145, label: 'VIC' },
+  { id: 'TAS', lat: -42.2, lng: 146.5, label: 'TAS' },
+];
+
+// ==================== TIER COLORS ====================
+function tierCapColor(tier, hovered) {
+  if (tier === 'green') return hovered ? 'rgba(0,212,177,0.7)' : 'rgba(0,212,177,0.45)';
+  if (tier === 'amber') return hovered ? 'rgba(245,166,35,0.65)' : 'rgba(245,166,35,0.4)';
+  return hovered ? 'rgba(107,127,153,0.6)' : 'rgba(107,127,153,0.35)';
+}
+function tierSideColor(tier) {
+  return 'rgba(0,0,0,0)';
+}
+function tierStrokeColor(tier) {
+  if (tier === 'green') return '#00d4b1';
+  if (tier === 'amber') return '#f5a623';
+  return '#6b7f99';
+}
+function tierPointColor(tier) {
+  if (tier === 'green') return '#00d4b1';
+  if (tier === 'amber') return '#f5a623';
+  return '#6b7f99';
+}
+
+// ==================== DOM REFS ====================
+const tooltip = document.getElementById('tooltip');
+const drawerEl = document.getElementById('drawer');
+const drawerBody = document.getElementById('drawerBody');
+const searchInput = document.getElementById('searchInput');
+const comparePanel = document.getElementById('comparePanel');
+const compareBody = document.getElementById('compareBody');
+const timelineBar = document.getElementById('timelineBar');
+const globeControls = document.getElementById('globeControls');
+const resetBtnEl = document.getElementById('resetBtn');
+const federalCards = document.getElementById('federalCards');
+const compareHint = document.getElementById('compareHint');
+
+let activeState = null;
+let hoveredState = null;
+let compareMode = false;
+let compareSelection = [];
+let dimmedIds = new Set();
+
+// ==================== CUSTOM HIT DETECTION ====================
+// Bypass Globe.GL's broken raycasting (CW winding + Three.js backface issue).
+// Use toGlobeCoords + point-in-polygon instead.
+
+function pointInPolygon(lat, lng, polygon) {
+  var inside = false;
+  for (var i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    var xi = polygon[i][0], yi = polygon[i][1]; // [lng, lat] in GeoJSON
+    var xj = polygon[j][0], yj = polygon[j][1];
+    if ((yi > lat) !== (yj > lat) && lng < (xj - xi) * (lat - yi) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function findStateAtCoords(lat, lng) {
+  // Check smallest polygons first (ACT is inside NSW)
+  var match = null;
+  var matchArea = Infinity;
+  for (var i = 0; i < GEO.features.length; i++) {
+    var f = GEO.features[i];
+    var coords = f.geometry.coordinates[0];
+    if (pointInPolygon(lat, lng, coords)) {
+      // Approximate area by bounding box
+      var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for (var k = 0; k < coords.length; k++) {
+        if (coords[k][0] < minX) minX = coords[k][0];
+        if (coords[k][0] > maxX) maxX = coords[k][0];
+        if (coords[k][1] < minY) minY = coords[k][1];
+        if (coords[k][1] > maxY) maxY = coords[k][1];
+      }
+      var area = (maxX - minX) * (maxY - minY);
+      if (area < matchArea) {
+        matchArea = area;
+        match = f.properties.id;
+      }
+    }
+  }
+  return match;
+}
+
+// ==================== GLOBE INIT ====================
+const world = Globe()
+  .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg')
+  .backgroundImageUrl('https://unpkg.com/three-globe/example/img/night-sky.png')
+  .showAtmosphere(true)
+  .atmosphereColor('#00d4b1')
+  .atmosphereAltitude(0.18)
+  .polygonsData(GEO.features)
+  .polygonCapColor(function(d) {
+    if (dimmedIds.size > 0 && dimmedIds.has(d.properties.id)) return 'rgba(30,40,60,0.08)';
+    var isHovered = hoveredState === d.properties.id;
+    var isActive = activeState === d.properties.id;
+    return tierCapColor(d.properties.tier, isHovered || isActive);
+  })
+  .polygonSideColor(function(d) {
+    if (dimmedIds.size > 0 && dimmedIds.has(d.properties.id)) return 'rgba(30,40,60,0.02)';
+    return tierSideColor(d.properties.tier);
+  })
+  .polygonStrokeColor(function(d) {
+    if (dimmedIds.size > 0 && dimmedIds.has(d.properties.id)) return 'rgba(30,40,60,0.1)';
+    var isHovered = hoveredState === d.properties.id;
+    var isActive = activeState === d.properties.id;
+    if (isHovered || isActive) return tierStrokeColor(d.properties.tier);
+    return '#2a4060';
+  })
+  .polygonAltitude(function(d) {
+    var isHovered = hoveredState === d.properties.id;
+    var isActive = activeState === d.properties.id;
+    if (isHovered || isActive) return 0.025;
+    return 0.015;
+  })
+  .polygonsTransitionDuration(300)
+  .polygonLabel(function() { return ''; })
+  .htmlElementsData(STATE_LABELS)
+  .htmlLat(function(d) { return d.lat; })
+  .htmlLng(function(d) { return d.lng; })
+  .htmlAltitude(0.02)
+  .htmlElement(function(d) {
+    var el = document.createElement('div');
+    el.style.cssText = 'font-family:Bricolage Grotesque,system-ui;font-weight:700;font-size:11px;color:#e8edf5;opacity:0.85;text-shadow:0 1px 4px rgba(0,0,0,0.8);pointer-events:none;text-align:center;';
+    el.textContent = d.label;
+    el.dataset.stateId = d.id;
+    return el;
+  })
+  .pointsData(CAPITALS)
+  .pointLat('lat')
+  .pointLng('lng')
+  .pointAltitude(0.01)
+  .pointRadius(function(d) { return d.id === 'ACT' ? 0.15 : 0.2; })
+  .pointColor(function(d) {
+    var s = STATES[d.id];
+    return s ? tierPointColor(s.tier) : '#6b7f99';
+  })
+  .pointsMerge(true)
+  (document.getElementById('globeContainer'));
+
+// Initial view: Australia
+world.pointOfView({ lat: -25, lng: 133, altitude: 2.2 }, 1000);
+
+// ==================== CUSTOM HOVER + CLICK HANDLERS ====================
+// Replace Globe.GL's broken onPolygonHover/onPolygonClick with toGlobeCoords + PIP
+
+var _lastHoverTime = 0;
+var globeContainer = document.getElementById('globeContainer');
+
+globeContainer.addEventListener('mousemove', function(e) {
+  // Throttle to ~60fps
+  var now = Date.now();
+  if (now - _lastHoverTime < 16) return;
+  _lastHoverTime = now;
+
+  // Position tooltip near cursor regardless
+  if (tooltip.classList.contains('visible')) {
+    var x = e.clientX + 16, y = e.clientY - 10;
+    var rect = tooltip.getBoundingClientRect();
+    tooltip.style.left = Math.min(x, window.innerWidth - rect.width - 20) + 'px';
+    tooltip.style.top = Math.min(y, window.innerHeight - rect.height - 20) + 'px';
+  }
+
+  var coords = world.toGlobeCoords(e.offsetX, e.offsetY);
+  if (!coords) {
+    if (hoveredState) {
+      hoveredState = null;
+      tooltip.classList.remove('visible');
+      world.polygonCapColor(world.polygonCapColor());
+    }
+    return;
+  }
+
+  var stateId = findStateAtCoords(coords.lat, coords.lng);
+  var prev = hoveredState;
+  hoveredState = stateId;
+
+  if (prev !== hoveredState) {
+    world.polygonCapColor(world.polygonCapColor());
+  }
+
+  if (stateId && !dimmedIds.has(stateId)) {
+    var s = STATES[stateId];
+    if (!s) return;
+    document.getElementById('tipTitle').textContent = s.name;
+    var badge = document.getElementById('tipBadge');
+    badge.textContent = s.status === 'mandatory' ? 'Mandatory' : 'Advisory';
+    badge.className = 'badge ' + s.status;
+    document.getElementById('tipMaturity').textContent = 'Maturity: ' + s.maturity.toUpperCase();
+    document.getElementById('tipDistinction').textContent = s.distinction;
+    tooltip.classList.add('visible');
+    // Reposition immediately for first appearance
+    var x2 = e.clientX + 16, y2 = e.clientY - 10;
+    var rect2 = tooltip.getBoundingClientRect();
+    tooltip.style.left = Math.min(x2, window.innerWidth - rect2.width - 20) + 'px';
+    tooltip.style.top = Math.min(y2, window.innerHeight - rect2.height - 20) + 'px';
+  } else {
+    tooltip.classList.remove('visible');
+  }
+});
+
+globeContainer.addEventListener('click', function(e) {
+  var coords = world.toGlobeCoords(e.offsetX, e.offsetY);
+  if (!coords) return;
+  var stateId = findStateAtCoords(coords.lat, coords.lng);
+  if (!stateId) return;
+  if (dimmedIds.has(stateId)) return;
+  tooltip.classList.remove('visible');
+  if (compareMode) {
+    toggleCompareSelection(stateId);
+    return;
+  }
+  openDrawer(stateId);
+});
+
+// ==================== DRAWER ====================
+function buildDrawerDOM(data) {
+  var frag = document.createDocumentFragment();
+  var title = document.createElement('h2');
+  title.className = 'drawer-title';
+  title.textContent = data.name;
+  frag.appendChild(title);
+
+  var badges = document.createElement('div');
+  badges.className = 'drawer-badges';
+  var sb = document.createElement('span');
+  sb.className = 'd-badge ' + data.status;
+  sb.textContent = data.status === 'mandatory' ? '\u2713 Mandatory' : '\u25CB Advisory';
+  badges.appendChild(sb);
+  var mb = document.createElement('span');
+  mb.className = 'd-badge ' + data.maturity;
+  mb.textContent = 'Maturity: ' + data.maturity.toUpperCase();
+  badges.appendChild(mb);
+  frag.appendChild(badges);
+
+  function addSec(t, c, isList) {
+    var s = document.createElement('div'); s.className = 'd-section';
+    var h = document.createElement('h3'); h.textContent = t; s.appendChild(h);
+    if (isList && Array.isArray(c)) {
+      var ul = document.createElement('ul');
+      c.forEach(function(i) { var li = document.createElement('li'); li.textContent = i; ul.appendChild(li); });
+      s.appendChild(ul);
+    } else if (typeof c === 'object' && c.bold) {
+      var p = document.createElement('p');
+      var strong = document.createElement('span'); strong.className = 'bold-text'; strong.textContent = c.bold; p.appendChild(strong);
+      if (c.sub) { var sub = document.createElement('span'); sub.className = 'sub-text'; sub.textContent = c.sub; p.appendChild(sub); }
+      s.appendChild(p);
+    } else {
+      var p = document.createElement('p'); p.textContent = c; s.appendChild(p);
+    }
+    frag.appendChild(s);
+  }
+
+  addSec('Framework', { bold: data.framework, sub: data.date });
+  addSec('Lead Body', data.lead);
+  addSec('Scope', data.scope);
+  addSec('Key Requirements', data.mechanism, true);
+  addSec('Private Sector Impact', data.privateSector);
+
+  if (data.funding) {
+    var fs = document.createElement('div'); fs.className = 'd-section';
+    var fh = document.createElement('h3'); fh.textContent = 'Funding'; fs.appendChild(fh);
+    var fb = document.createElement('div'); fb.className = 'd-callout green';
+    var fl = document.createElement('div'); fl.className = 'callout-label'; fl.textContent = 'Key Allocations'; fb.appendChild(fl);
+    var fv = document.createElement('div'); fv.className = 'callout-value'; fv.textContent = data.funding; fb.appendChild(fv);
+    fs.appendChild(fb); frag.appendChild(fs);
+  }
+  if (data.deadlines && data.deadlines.length) {
+    var ds = document.createElement('div'); ds.className = 'd-section';
+    var dh = document.createElement('h3'); dh.textContent = 'Key Deadlines'; ds.appendChild(dh);
+    data.deadlines.forEach(function(d) {
+      var db = document.createElement('div'); db.className = 'd-callout red';
+      var dl = document.createElement('div'); dl.className = 'callout-label'; dl.textContent = d.label; db.appendChild(dl);
+      var dv = document.createElement('div'); dv.className = 'callout-value'; dv.textContent = d.text; db.appendChild(dv);
+      ds.appendChild(db);
+    });
+    frag.appendChild(ds);
+  }
+  if (data.auditNote) addSec('Audit Findings', data.auditNote);
+  if (data.boardNote) {
+    var bs = document.createElement('div'); bs.className = 'd-section';
+    var bh = document.createElement('h3'); bh.textContent = 'Network Note'; bs.appendChild(bh);
+    var bp = document.createElement('p'); bp.style.color = 'var(--teal)'; bp.textContent = data.boardNote; bs.appendChild(bp);
+    frag.appendChild(bs);
+  }
+  if (data.correction) {
+    var cs = document.createElement('div'); cs.className = 'd-section';
+    var ch = document.createElement('h3'); ch.textContent = 'Data Note'; cs.appendChild(ch);
+    var cp = document.createElement('p'); cp.style.fontStyle = 'italic'; cp.textContent = data.correction; cs.appendChild(cp);
+    frag.appendChild(cs);
+  }
+  if (data.links && data.links.length) {
+    var ls = document.createElement('div'); ls.className = 'd-section';
+    var lh = document.createElement('h3'); lh.textContent = 'Official Sources'; ls.appendChild(lh);
+    var ld = document.createElement('div'); ld.className = 'd-links';
+    data.links.forEach(function(l) {
+      var a = document.createElement('a'); a.href = l.url; a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = '\u2192 ' + l.label; ld.appendChild(a);
+    });
+    ls.appendChild(ld); frag.appendChild(ls);
+  }
+
+  var disc = document.createElement('div'); disc.className = 'd-disclaimer';
+  disc.textContent = 'This data is for informational purposes only. Compiled from publicly available government sources as of March 2026. Verify with official sources before making compliance decisions.';
+  frag.appendChild(disc);
+  return frag;
+}
+
+function openDrawer(stateId) {
+  var data = STATES[stateId];
+  if (!data) return;
+  activeState = stateId;
+  world.polygonCapColor(world.polygonCapColor());
+
+  drawerBody.textContent = '';
+  drawerBody.appendChild(buildDrawerDOM(data));
+  drawerEl.classList.add('open');
+  timelineBar.classList.add('shifted');
+  globeControls.classList.add('shifted');
+  resetBtnEl.classList.add('shifted');
+
+  // Fly to state center
+  var feature = GEO.features.find(function(f) { return f.properties.id === stateId; });
+  if (feature) {
+    var coords = feature.geometry.coordinates[0];
+    var sumLat = 0, sumLng = 0;
+    coords.forEach(function(c) { sumLng += c[0]; sumLat += c[1]; });
+    world.pointOfView({ lat: sumLat / coords.length, lng: sumLng / coords.length, altitude: 1.4 }, 800);
+  }
+}
+
+function closeDrawer() {
+  drawerEl.classList.remove('open');
+  timelineBar.classList.remove('shifted');
+  globeControls.classList.remove('shifted');
+  resetBtnEl.classList.remove('shifted');
+  activeState = null;
+  world.polygonCapColor(world.polygonCapColor());
+}
+document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+
+// ==================== SEARCH & FILTER ====================
+function isMatch(id, q) {
+  var d = STATES[id]; if (!d) return false;
+  return (d.name + ' ' + d.framework + ' ' + d.distinction + ' ' + d.status + ' ' + d.maturity + ' ' + (d.keywords || []).join(' ')).toLowerCase().indexOf(q) >= 0;
+}
+
+function doSearch(query) {
+  var q = query.toLowerCase().trim();
+  dimmedIds.clear();
+  if (q.length > 0) {
+    Object.keys(STATES).forEach(function(id) {
+      if (!isMatch(id, q)) dimmedIds.add(id);
+    });
+  }
+  world.polygonCapColor(world.polygonCapColor());
+  // Update HTML label opacity
+  document.querySelectorAll('#globeContainer div[data-state-id]').forEach(function(el) {
+    el.style.opacity = dimmedIds.has(el.dataset.stateId) ? '0.1' : '0.85';
+  });
+}
+searchInput.addEventListener('input', function() { doSearch(this.value); });
+
+// Filter chips
+document.querySelectorAll('.chip').forEach(function(chip) {
+  chip.addEventListener('click', function() {
+    var wasActive = chip.classList.contains('active');
+    document.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('active'); });
+    if (wasActive) {
+      dimmedIds.clear(); searchInput.value = '';
+      world.polygonCapColor(world.polygonCapColor());
+      document.querySelectorAll('#globeContainer div[data-state-id]').forEach(function(el) { el.style.opacity = '0.85'; });
+      return;
+    }
+    chip.classList.add('active');
+    var tier = chip.dataset.filter;
+    dimmedIds.clear();
+    Object.keys(STATES).forEach(function(id) {
+      if (STATES[id].tier !== tier) dimmedIds.add(id);
+    });
+    world.polygonCapColor(world.polygonCapColor());
+    document.querySelectorAll('#globeContainer div[data-state-id]').forEach(function(el) {
+      el.style.opacity = dimmedIds.has(el.dataset.stateId) ? '0.1' : '0.85';
+    });
+  });
+});
+
+// ==================== COMPARE MODE ====================
+document.getElementById('compareBtn').addEventListener('click', function() {
+  compareMode = !compareMode;
+  this.classList.toggle('active', compareMode);
+  compareHint.classList.toggle('visible', compareMode);
+  compareSelection = [];
+});
+
+function toggleCompareSelection(id) {
+  var idx = compareSelection.indexOf(id);
+  if (idx >= 0) {
+    compareSelection.splice(idx, 1);
+  } else {
+    if (compareSelection.length >= 2) compareSelection.shift();
+    compareSelection.push(id);
+  }
+  if (compareSelection.length === 2) {
+    compareHint.classList.remove('visible');
+    showComparison();
+  }
+}
+
+function showComparison() {
+  compareBody.textContent = '';
+  compareSelection.forEach(function(id) {
+    var col = document.createElement('div'); col.className = 'compare-col';
+    col.appendChild(buildDrawerDOM(STATES[id]));
+    compareBody.appendChild(col);
+  });
+  comparePanel.classList.add('visible');
+}
+document.getElementById('compareClose').addEventListener('click', function() {
+  comparePanel.classList.remove('visible');
+  compareMode = false;
+  document.getElementById('compareBtn').classList.remove('active');
+  compareHint.classList.remove('visible');
+  compareSelection = [];
+});
+
+// ==================== FEDERAL OVERLAY ====================
+document.getElementById('federalToggle').addEventListener('click', function() {
+  this.classList.toggle('expanded');
+  federalCards.classList.toggle('visible');
+});
+
+// ==================== GLOBE CONTROLS ====================
+document.getElementById('zoomIn').addEventListener('click', function() {
+  var pov = world.pointOfView();
+  world.pointOfView({ altitude: Math.max(0.5, pov.altitude * 0.7) }, 300);
+});
+document.getElementById('zoomOut').addEventListener('click', function() {
+  var pov = world.pointOfView();
+  world.pointOfView({ altitude: Math.min(5, pov.altitude * 1.4) }, 300);
+});
+document.getElementById('resetBtn').addEventListener('click', function() {
+  closeDrawer();
+  dimmedIds.clear();
+  searchInput.value = '';
+  document.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('active'); });
+  world.polygonCapColor(world.polygonCapColor());
+  document.querySelectorAll('#globeContainer div[data-state-id]').forEach(function(el) { el.style.opacity = '0.85'; });
+  world.pointOfView({ lat: -25, lng: 133, altitude: 2.2 }, 800);
+});
+document.getElementById('brandBtn').addEventListener('click', function() {
+  closeDrawer();
+  world.pointOfView({ lat: -25, lng: 133, altitude: 2.2 }, 800);
+});
+
+// ==================== KEYBOARD ====================
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (comparePanel.classList.contains('visible')) document.getElementById('compareClose').click();
+    else if (drawerEl.classList.contains('open')) closeDrawer();
+    else if (federalCards.classList.contains('visible')) {
+      federalCards.classList.remove('visible');
+      document.getElementById('federalToggle').classList.remove('expanded');
+    }
+  }
+  if (e.key === '+' || e.key === '=') document.getElementById('zoomIn').click();
+  if (e.key === '-') document.getElementById('zoomOut').click();
+  if (e.key === '0') document.getElementById('resetBtn').click();
+});
+
+// ==================== RESPONSIVE ====================
+function handleResize() {
+  world.width(window.innerWidth).height(window.innerHeight);
+}
+window.addEventListener('resize', handleResize);
+
+// ==================== AUTO-ROTATE ====================
+var autoRotate = true;
+world.controls().autoRotate = true;
+world.controls().autoRotateSpeed = 0.3;
+world.controls().enableDamping = true;
+world.controls().dampingFactor = 0.1;
+
+['mousedown', 'touchstart', 'wheel'].forEach(function(evt) {
+  document.getElementById('globeContainer').addEventListener(evt, function() {
+    if (autoRotate) {
+      autoRotate = false;
+      world.controls().autoRotate = false;
+    }
+  }, { once: false, passive: true });
+});
+
+</script>
+</body>
+</html>
