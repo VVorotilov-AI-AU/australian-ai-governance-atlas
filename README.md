@@ -74,3 +74,5 @@ MIT License. See [LICENSE](LICENSE).
 ## Author
 
 Built by [Vladimir Vorotilov](https://linkedin.com/in/vladimir-vorotilov). Research and data compilation from official government sources.
+
+Concept inspired by Josh Tedjasaputra's work at CX Insight.
