@@ -74,5 +74,3 @@ MIT License. See [LICENSE](LICENSE).
 ## Author
 
 Built by [Vladimir Vorotilov](https://linkedin.com/in/vladimir-vorotilov). Research and data compilation from official government sources.
-
-Inspired by Josh Tedjasaputra / CX Insight's approach to mapping regulatory landscapes.
