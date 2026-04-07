@@ -970,12 +970,13 @@ GEO.features.forEach(function(f) {
   }
 });
 
-// Rasterize state polygons into 0.25° grid cells — eliminates earcut spike artifacts.
+// Rasterize state polygons into 0.5° grid cells — eliminates earcut spike artifacts.
 // earcut triangulates in flat lat/lng space; large polygons get long internal triangles
 // that become visible spikes on the sphere. Tiny squares earcut cleanly into 2 triangles.
 // Click/hover detection uses findStateAtCoords() on original GEO.features, unaffected.
 // Must run after enrichment so cells inherit tier/status/maturity from each feature.
-var RASTER_STEP = 0.25;
+// 0.5° gives ~2800 total cells (vs 11K at 0.25°) — much better render performance.
+var RASTER_STEP = 0.5;
 var rasterizedFeatures = [];
 GEO.features.forEach(function(feature) {
   var ring = feature.geometry.coordinates[0];
