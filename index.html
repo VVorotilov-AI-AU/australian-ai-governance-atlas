@@ -970,44 +970,35 @@ GEO.features.forEach(function(f) {
   }
 });
 
-// Rasterize state polygons into 0.5° grid cells — eliminates earcut spike artifacts.
-// earcut triangulates in flat lat/lng space; large polygons get long internal triangles
-// that become visible spikes on the sphere. Tiny squares earcut cleanly into 2 triangles.
-// Click/hover detection uses findStateAtCoords() on original GEO.features, unaffected.
-// Must run after enrichment so cells inherit tier/status/maturity from each feature.
-// 0.5° gives ~2800 total cells (vs 11K at 0.25°) — much better render performance.
-var RASTER_STEP = 0.5;
-var rasterizedFeatures = [];
-GEO.features.forEach(function(feature) {
-  var ring = feature.geometry.coordinates[0];
-  var minLon = Infinity, maxLon = -Infinity, minLat = Infinity, maxLat = -Infinity;
-  ring.forEach(function(c) {
-    if (c[0] < minLon) minLon = c[0];
-    if (c[0] > maxLon) maxLon = c[0];
-    if (c[1] < minLat) minLat = c[1];
-    if (c[1] > maxLat) maxLat = c[1];
-  });
-  var step = RASTER_STEP;
-  for (var lon = Math.floor(minLon / step) * step; lon < maxLon; lon += step) {
-    for (var lat = Math.floor(minLat / step) * step; lat < maxLat; lat += step) {
-      if (pointInPolygon(lat + step / 2, lon + step / 2, ring)) {
-        rasterizedFeatures.push({
-          type: 'Feature',
-          properties: Object.assign({}, feature.properties),
-          geometry: {
-            type: 'Polygon',
-            coordinates: [[
-              [lon, lat],
-              [lon + step, lat],
-              [lon + step, lat + step],
-              [lon, lat + step],
-              [lon, lat]
-            ]]
-          }
-        });
-      }
+// Densify polygon edges to reduce long-triangle artifacts from spherical projection.
+function densifyRing(ring, maxStepDeg) {
+  var dense = [];
+  for (var i = 0; i < ring.length - 1; i++) {
+    var a = ring[i];
+    var b = ring[i + 1];
+    dense.push([a[0], a[1]]);
+    var dLon = b[0] - a[0];
+    var dLat = b[1] - a[1];
+    var dist = Math.max(Math.abs(dLon), Math.abs(dLat));
+    var steps = Math.floor(dist / maxStepDeg);
+    for (var s = 1; s < steps; s++) {
+      var t = s / steps;
+      dense.push([a[0] + dLon * t, a[1] + dLat * t]);
     }
   }
+  dense.push([ring[ring.length - 1][0], ring[ring.length - 1][1]]);
+  return dense;
+}
+
+var polygonFeatures = GEO.features.map(function(feature) {
+  return {
+    type: 'Feature',
+    properties: Object.assign({}, feature.properties),
+    geometry: {
+      type: 'Polygon',
+      coordinates: [densifyRing(feature.geometry.coordinates[0], 0.5)]
+    }
+  };
 });
 
 // Capital city markers
@@ -1122,7 +1113,7 @@ const world = Globe()
   .showAtmosphere(true)
   .atmosphereColor('#00d4b1')
   .atmosphereAltitude(0.18)
-  .polygonsData(rasterizedFeatures)
+  .polygonsData(polygonFeatures)
   .polygonCapColor(function(d) {
     if (dimmedIds.size > 0 && dimmedIds.has(d.properties.id)) return 'rgba(30,40,60,0.08)';
     var isHovered = hoveredState === d.properties.id;
