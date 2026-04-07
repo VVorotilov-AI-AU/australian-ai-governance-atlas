@@ -970,34 +970,36 @@ GEO.features.forEach(function(f) {
   }
 });
 
-// Densify polygon edges to reduce long-triangle artifacts from spherical projection.
-function densifyRing(ring, maxStepDeg) {
-  var dense = [];
-  for (var i = 0; i < ring.length - 1; i++) {
-    var a = ring[i];
-    var b = ring[i + 1];
-    dense.push([a[0], a[1]]);
-    var dLon = b[0] - a[0];
-    var dLat = b[1] - a[1];
-    var dist = Math.max(Math.abs(dLon), Math.abs(dLat));
-    var steps = Math.floor(dist / maxStepDeg);
-    for (var s = 1; s < steps; s++) {
-      var t = s / steps;
-      dense.push([a[0] + dLon * t, a[1] + dLat * t]);
-    }
-  }
-  dense.push([ring[ring.length - 1][0], ring[ring.length - 1][1]]);
-  return dense;
-}
+const STATE_CENTROIDS = {
+  NSW: { lat: -33.8688, lng: 151.2093 },
+  VIC: { lat: -37.8136, lng: 144.9631 },
+  QLD: { lat: -27.4698, lng: 153.0251 },
+  WA: { lat: -31.9505, lng: 115.8605 },
+  SA: { lat: -34.9285, lng: 138.6007 },
+  TAS: { lat: -42.8826, lng: 147.3257 },
+  ACT: { lat: -35.2809, lng: 149.13 },
+  NT: { lat: -12.4634, lng: 130.8456 }
+};
 
-var polygonFeatures = GEO.features.map(function(feature) {
+// GeoJSON state code property in this file is `properties.id`.
+var stateToTier = {};
+GEO.features.forEach(function(feature) {
+  var props = feature.properties || {};
+  var code = props.STATE_CODE || props.state_code || props.id || props.shortName;
+  if (code) stateToTier[code] = props.tier;
+});
+
+var ringsData = Object.entries(STATE_CENTROIDS).map(function(entry) {
+  var code = entry[0];
+  var pos = entry[1];
   return {
-    type: 'Feature',
-    properties: Object.assign({}, feature.properties),
-    geometry: {
-      type: 'Polygon',
-      coordinates: [densifyRing(feature.geometry.coordinates[0], 0.5)]
-    }
+    stateCode: code,
+    lat: pos.lat,
+    lng: pos.lng,
+    maxR: 5,
+    propagationSpeed: 1.5,
+    repeatPeriod: 2000,
+    tier: stateToTier[code]
   };
 });
 
@@ -1113,32 +1115,18 @@ const world = Globe()
   .showAtmosphere(true)
   .atmosphereColor('#00d4b1')
   .atmosphereAltitude(0.18)
-  .polygonsData(polygonFeatures)
-  .polygonCapColor(function(d) {
-    if (dimmedIds.size > 0 && dimmedIds.has(d.properties.id)) return 'rgba(30,40,60,0.08)';
-    var isHovered = hoveredState === d.properties.id;
-    var isActive = activeState === d.properties.id;
-    return tierCapColor(d.properties.tier, isHovered || isActive);
+  .ringsData(ringsData)
+  .ringLat('lat')
+  .ringLng('lng')
+  .ringColor(function(d) {
+    if (dimmedIds.size > 0 && dimmedIds.has(d.stateCode)) return 'rgba(30,40,60,0.08)';
+    var isHovered = hoveredState === d.stateCode;
+    var isActive = activeState === d.stateCode;
+    return tierCapColor(d.tier, isHovered || isActive);
   })
-  .polygonSideColor(function(d) {
-    if (dimmedIds.size > 0 && dimmedIds.has(d.properties.id)) return 'rgba(30,40,60,0.02)';
-    return tierSideColor(d.properties.tier);
-  })
-  .polygonStrokeColor(function(d) {
-    if (dimmedIds.size > 0 && dimmedIds.has(d.properties.id)) return 'rgba(30,40,60,0.1)';
-    var isHovered = hoveredState === d.properties.id;
-    var isActive = activeState === d.properties.id;
-    if (isHovered || isActive) return tierStrokeColor(d.properties.tier);
-    return 'rgba(0,0,0,0)'; // transparent — avoids visible grid lines between adjacent same-state cells
-  })
-  .polygonAltitude(function(d) {
-    var isHovered = hoveredState === d.properties.id;
-    var isActive = activeState === d.properties.id;
-    if (isHovered || isActive) return 0.025;
-    return 0.015;
-  })
-  .polygonsTransitionDuration(300)
-  .polygonLabel(function() { return ''; })
+  .ringMaxRadius('maxR')
+  .ringPropagationSpeed('propagationSpeed')
+  .ringRepeatPeriod('repeatPeriod')
   .htmlElementsData(STATE_LABELS)
   .htmlLat(function(d) { return d.lat; })
   .htmlLng(function(d) { return d.lng; })
@@ -1160,7 +1148,22 @@ const world = Globe()
     return s ? tierPointColor(s.tier) : '#6b7f99';
   })
   .pointsMerge(true)
+  .hexPolygonsData(GEO.features)
+  .hexPolygonResolution(4)
+  .hexPolygonMargin(0.08)
+  .hexPolygonColor(function(feature) {
+    var id = feature.properties.id;
+    if (dimmedIds.size > 0 && dimmedIds.has(id)) return 'rgba(30,40,60,0.08)';
+    var isHovered = hoveredState === id;
+    var isActive = activeState === id;
+    return tierCapColor(feature.properties.tier, isHovered || isActive);
+  })
   (document.getElementById('globeContainer'));
+
+function refreshRingColors() {
+  world.ringColor(world.ringColor());
+  world.hexPolygonColor(world.hexPolygonColor());
+}
 
 // Initial view: Australia
 world.pointOfView({ lat: -25, lng: 133, altitude: 2.2 }, 1000);
@@ -1190,7 +1193,7 @@ globeContainer.addEventListener('mousemove', function(e) {
     if (hoveredState) {
       hoveredState = null;
       tooltip.classList.remove('visible');
-      world.polygonCapColor(world.polygonCapColor());
+      refreshRingColors();
     }
     return;
   }
@@ -1200,7 +1203,7 @@ globeContainer.addEventListener('mousemove', function(e) {
   hoveredState = stateId;
 
   if (prev !== hoveredState) {
-    world.polygonCapColor(world.polygonCapColor());
+    refreshRingColors();
   }
 
   if (stateId && !dimmedIds.has(stateId)) {
@@ -1334,7 +1337,7 @@ function openDrawer(stateId) {
   var data = STATES[stateId];
   if (!data) return;
   activeState = stateId;
-  world.polygonCapColor(world.polygonCapColor());
+  refreshRingColors();
 
   drawerBody.textContent = '';
   drawerBody.appendChild(buildDrawerDOM(data));
@@ -1359,7 +1362,7 @@ function closeDrawer() {
   globeControls.classList.remove('shifted');
   resetBtnEl.classList.remove('shifted');
   activeState = null;
-  world.polygonCapColor(world.polygonCapColor());
+  refreshRingColors();
 }
 document.getElementById('drawerClose').addEventListener('click', closeDrawer);
 
@@ -1377,7 +1380,7 @@ function doSearch(query) {
       if (!isMatch(id, q)) dimmedIds.add(id);
     });
   }
-  world.polygonCapColor(world.polygonCapColor());
+  refreshRingColors();
   // Update HTML label opacity
   document.querySelectorAll('#globeContainer div[data-state-id]').forEach(function(el) {
     el.style.opacity = dimmedIds.has(el.dataset.stateId) ? '0.1' : '0.85';
@@ -1392,7 +1395,7 @@ document.querySelectorAll('.chip').forEach(function(chip) {
     document.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('active'); });
     if (wasActive) {
       dimmedIds.clear(); searchInput.value = '';
-      world.polygonCapColor(world.polygonCapColor());
+      refreshRingColors();
       document.querySelectorAll('#globeContainer div[data-state-id]').forEach(function(el) { el.style.opacity = '0.85'; });
       return;
     }
@@ -1402,7 +1405,7 @@ document.querySelectorAll('.chip').forEach(function(chip) {
     Object.keys(STATES).forEach(function(id) {
       if (STATES[id].tier !== tier) dimmedIds.add(id);
     });
-    world.polygonCapColor(world.polygonCapColor());
+    refreshRingColors();
     document.querySelectorAll('#globeContainer div[data-state-id]').forEach(function(el) {
       el.style.opacity = dimmedIds.has(el.dataset.stateId) ? '0.1' : '0.85';
     });
@@ -1468,7 +1471,7 @@ document.getElementById('resetBtn').addEventListener('click', function() {
   dimmedIds.clear();
   searchInput.value = '';
   document.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('active'); });
-  world.polygonCapColor(world.polygonCapColor());
+  refreshRingColors();
   document.querySelectorAll('#globeContainer div[data-state-id]').forEach(function(el) { el.style.opacity = '0.85'; });
   world.pointOfView({ lat: -25, lng: 133, altitude: 2.2 }, 800);
 });
