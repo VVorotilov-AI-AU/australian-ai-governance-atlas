@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Australian AI Governance Atlas | 3D Globe Explorer | March 2026</title>
-<meta name="description" content="Interactive 3D globe of AI governance frameworks across all 8 Australian jurisdictions. Explore, search and compare regulatory landscapes.">
+<title>Australian AI Governance Atlas | 3D Globe Explorer | April 2026</title>
+<meta name="description" content="Interactive 3D globe of AI governance frameworks across all 8 Australian jurisdictions and federal bodies. Updated April 2026. Explore, search and compare regulatory landscapes.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -180,6 +180,43 @@ html, body {
 .tl-dot.later { background: var(--grey-blue); }
 .tl-date { font-size: 10px; font-weight: 600; color: var(--text-primary); white-space: nowrap; }
 .tl-text { font-size: 9px; color: var(--text-muted); text-align: center; line-height: 1.3; }
+.tl-days {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.3px;
+  padding: 1px 6px; border-radius: 999px; margin-top: 2px;
+}
+.tl-days.urgent { background: rgba(239,68,68,0.15); color: var(--red); }
+.tl-days.soon { background: rgba(245,166,35,0.15); color: var(--amber); }
+.tl-days.later { background: rgba(107,127,153,0.15); color: var(--grey-blue); }
+.tl-days.passed { background: rgba(107,127,153,0.1); color: var(--text-muted); }
+
+/* Updated badge */
+.updated-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 999px;
+  background: rgba(0,212,177,0.1); border: 1px solid rgba(0,212,177,0.25);
+  color: var(--teal); font-size: 9px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-left: 6px; vertical-align: middle;
+}
+
+/* Tooltip abbr for acronyms like CAIO */
+abbr[title] {
+  text-decoration: underline dotted;
+  text-decoration-color: var(--text-muted);
+  text-underline-offset: 2px;
+  cursor: help;
+}
+
+/* Deadline card urgency ribbons for federal cards */
+.f-card .days-pill {
+  display: inline-block; font-size: 9px; font-weight: 700;
+  padding: 1px 6px; border-radius: 999px;
+  margin-top: 4px; letter-spacing: 0.3px;
+}
+.f-card .days-pill.urgent { background: rgba(239,68,68,0.15); color: var(--red); }
+.f-card .days-pill.soon { background: rgba(245,166,35,0.15); color: var(--amber); }
+.f-card .days-pill.later { background: rgba(107,127,153,0.15); color: var(--grey-blue); }
+.f-card .days-pill.passed { background: rgba(107,127,153,0.1); color: var(--text-muted); }
 
 /* ===== CROSS BORDER CHIP ===== */
 .cross-border-chip {
@@ -502,8 +539,8 @@ html, body {
   <div class="brand" id="brandBtn" title="Reset view">
     <div class="brand-icon">AI</div>
     <div class="brand-text">
-      <div class="brand-title">Australian <em>AI Governance</em> Atlas</div>
-      <div class="brand-sub">3D Explorer &middot; 8 Jurisdictions &middot; March 2026</div>
+      <div class="brand-title">Australian <em>AI Governance</em> Atlas<span class="updated-badge" title="Data refreshed April 2026">Updated Apr 2026</span></div>
+      <div class="brand-sub">3D Explorer &middot; 8 Jurisdictions + Federal &middot; Updated April 2026</div>
     </div>
   </div>
   <div class="search-box">
@@ -524,7 +561,7 @@ html, body {
 <div class="stats-strip" id="statsStrip">
   <div class="stat-pill"><span class="stat-num teal">8</span><span class="stat-label">Jurisdictions</span></div>
   <div class="stat-pill"><span class="stat-num teal">6</span><span class="stat-label">Mandatory</span></div>
-  <div class="stat-pill"><span class="stat-num red">3</span><span class="stat-label">Urgent Deadlines</span></div>
+  <div class="stat-pill"><span class="stat-num red">5</span><span class="stat-label">Federal Deadlines</span></div>
   <div class="stat-pill"><span class="stat-num amber">!</span><span class="stat-label">Cross-border gap</span></div>
 </div>
 
@@ -535,28 +572,7 @@ html, body {
 </div>
 
 <!-- Timeline bar -->
-<div class="timeline-bar" id="timelineBar">
-  <div class="tl-item">
-    <div class="tl-dot urgent"></div>
-    <div class="tl-date">30 Jun 2026</div>
-    <div class="tl-text">NSW AI policy deadline</div>
-  </div>
-  <div class="tl-item">
-    <div class="tl-dot urgent"></div>
-    <div class="tl-date">Jul 2026</div>
-    <div class="tl-text">Federal CAIO deadline</div>
-  </div>
-  <div class="tl-item">
-    <div class="tl-dot soon"></div>
-    <div class="tl-date">Aug 2026</div>
-    <div class="tl-text">EU AI Act applies</div>
-  </div>
-  <div class="tl-item">
-    <div class="tl-dot later"></div>
-    <div class="tl-date">Q4 2026</div>
-    <div class="tl-text">Federal guardrails review</div>
-  </div>
-</div>
+<div class="timeline-bar" id="timelineBar"></div>
 
 <!-- Tooltip -->
 <div class="tooltip" id="tooltip">
@@ -618,19 +634,47 @@ html, body {
     <p>Voluntary. Core reference adopted by all states. Covers human rights, fairness, transparency, accountability, reliability, privacy, contestability, oversight.</p>
   </div>
   <div class="f-card">
-    <div class="year">June 2024</div>
-    <h4>National AI Assurance Framework</h4>
-    <p>Harmonisation across government levels. Not binding on private sector. Guides risk assessment alignment.</p>
-  </div>
-  <div class="f-card">
-    <div class="year">September 2024</div>
-    <h4>Voluntary AI Safety Standard</h4>
-    <p>10 guardrails for AI development. Voluntary but signals future regulatory direction for high-risk AI.</p>
+    <div class="year">October 2025</div>
+    <h4>NAIC AI6 Guidance</h4>
+    <p>National AI Centre's six essential practices for AI developers and deployers. Replaced the Voluntary AI Safety Standard (VAISS). Current baseline reference.</p>
   </div>
   <div class="f-card">
     <div class="year">December 2025</div>
     <h4>National AI Plan</h4>
-    <p>Mandatory guardrails dropped after pushback. Relies on existing laws, voluntary frameworks, AI Safety Institute ($29.9M). CAIO deadline: July 2026.</p>
+    <p>Australia's first whole-of-economy AI strategy. Government formally abandoned mandatory AI-specific guardrails: approach is policy-led, not statute-led. No standalone AI Act. Existing laws (Privacy Act, Consumer Law, Online Safety Act) updated instead.</p>
+  </div>
+  <div class="f-card">
+    <div class="year">December 2025</div>
+    <h4>DTA AI Policy v2.0</h4>
+    <p>Updated Policy for Responsible Use of AI in Government. <abbr title="Australian Public Service (federal government workforce)">APS</abbr> agencies must maintain an internal AI use-case register, assign an accountable owner per use case, and complete an AI Impact Assessment before deployment. Each APS agency must also designate a <abbr title="Chief AI Officer — nominated senior accountable owner for agency AI use">CAIO</abbr>.</p>
+  </div>
+  <div class="f-card">
+    <div class="year">Early 2026</div>
+    <h4><abbr title="Australian AI Safety Institute — independent body for AI model testing and advice">AI Safety Institute (AISI)</abbr></h4>
+    <p>Operational 2026. Independent technical analysis, monitoring, safety testing, and advice to regulators and ministers. Anthropic MOU signed 31 Mar 2026 includes AISI collaboration.</p>
+  </div>
+  <div class="f-card">
+    <div class="year">31 March 2026</div>
+    <h4>Anthropic Federal MOU</h4>
+    <p>First signed agreement under the National AI Plan. AUD$3M in Claude API credits to ANU, Murdoch Children's, Garvan, and Curtin University (Perth). Sydney office opens 2026.</p>
+  </div>
+  <div class="f-card">
+    <div class="year" id="fc-acma-year">1 July 2026</div>
+    <h4>ACMA Commercial Radio Code</h4>
+    <p>Mandatory disclosure when a synthetic AI voice hosts regular programs or news. First AU broadcasting code to address AI. May extend to streaming if voluntary compliance is insufficient.</p>
+    <span class="days-pill" id="fc-acma-pill"></span>
+  </div>
+  <div class="f-card">
+    <div class="year red" id="fc-oaic-year">5 June 2026</div>
+    <h4>OAIC Children's Privacy Code</h4>
+    <p>Consultation closes. Affects any AI platform processing data from users under 16. Code must be registered under the Privacy Act by 10 Dec 2026.</p>
+    <span class="days-pill" id="fc-oaic-pill"></span>
+  </div>
+  <div class="f-card">
+    <div class="year red" id="fc-adm-year">10 December 2026</div>
+    <h4>Privacy Act ADM Transparency</h4>
+    <p>APP entities must disclose in their Privacy Policy when a computer program makes decisions that significantly affect individuals. OAIC enforcement: infringement notices, compliance notices, civil penalties.</p>
+    <span class="days-pill" id="fc-adm-pill"></span>
   </div>
   <div class="f-card">
     <div class="year">Legacy</div>
@@ -638,9 +682,10 @@ html, body {
     <p>5 governance failures shaped every current framework: no legal basis, removed human oversight, flawed algorithm, suppressed concerns, no accountability.</p>
   </div>
   <div class="f-card">
-    <div class="year red">August 2026</div>
+    <div class="year red" id="fc-eu-year">August 2026</div>
     <h4>EU AI Act (Extraterritorial)</h4>
     <p>Article 2 high-risk obligations enforceable on AU companies serving EU markets. Penalties up to EUR 35M / 7% global turnover.</p>
+    <span class="days-pill" id="fc-eu-pill"></span>
   </div>
 </div>
 
@@ -657,22 +702,30 @@ html, body {
 const STATES = {
   WA: {
     name: 'Western Australia',
-    framework: 'WA Government AI Policy and Assurance Framework',
-    date: 'November 2024',
-    lead: 'Office of Digital Government (DGov), Dept of Premier and Cabinet',
+    framework: 'WA Government AI Policy and Assurance Framework + WA Health AI Policy (amended 12 Feb 2026)',
+    date: 'Nov 2024 (whole-of-gov). WA Health policy amended 12 February 2026.',
+    lead: 'Office of Digital Government (DGov), Dept of Premier and Cabinet. WA Health: Dept of Health.',
     status: 'mandatory', maturity: 'high', tier: 'green',
-    scope: 'All WA Government agencies including existing and off-the-shelf AI systems.',
-    distinction: 'No exemptions for off-the-shelf or existing AI. Strictest retroactive coverage nationally.',
+    scope: 'All WA Government agencies including existing and off-the-shelf AI systems. WA Health policy adds sector-specific minimum requirements, applied retroactively.',
+    distinction: 'No exemptions for off-the-shelf or existing AI. Strictest retroactive coverage nationally. Curtin University (Perth) named in the Anthropic federal MOU (31 Mar 2026) — AUD$3M Claude API credits for natural resources, agriculture, healthcare, financial services research.',
     mechanism: [
       'Self-assessment against 5 ethics principles',
       'Mid-range+ risk or >$5M projects escalate to AI Advisory Board (7 members, operational Jun 2025)',
       'No exemptions for off-the-shelf or existing AI systems',
+      'WA Health AI Policy (Feb 2026): sector-specific minimum requirements for responsible, safe AI in WA Health. Retroactive.',
+      'Natalia Kacperek (CDO, Office of Digital Government WA) presented WA progress against National AI Plan at WADSIH breakfast 18 Feb 2026',
     ],
-    privateSector: 'Indirect via procurement. Vendors not meeting WA standards are excluded from government panels.',
-    funding: null, deadlines: [],
+    privateSector: 'Indirect via procurement. Vendors not meeting WA standards are excluded from government panels. WA agencies must also comply with DTA federal v2.0 requirements from Dec 2025.',
+    funding: null,
+    deadlines: [],
     boardNote: 'Alex Jenkins (WADSIH/Curtin) is a member of the AI Advisory Board.',
-    links: [{ label: 'DGov AI Policy', url: 'https://www.wa.gov.au/organisation/department-of-the-premier-and-cabinet/office-of-digital-government' }],
-    keywords: ['procurement', 'retroactive', 'off-the-shelf', 'DGov', 'advisory board'],
+    links: [
+      { label: 'WA AI Policy and Assurance Framework', url: 'https://www.wa.gov.au/government/publications/wa-government-artificial-intelligence-policy-and-assurance-framework' },
+      { label: 'WA Health AI Policy (amended 12 Feb 2026)', url: 'https://www.health.wa.gov.au/~/media/Corp/Policy-Frameworks/Information-and-Communications-Technology/Artificial-Intelligence-Policy/Artificial-Intelligence-Policy.pdf' },
+      { label: 'WADSIH Stakeholder Breakfast Feb 2026', url: 'https://wadsih.org.au/news-publications/wadsih-stakeholder-breakfast-february-2026/' },
+      { label: 'Office of Digital Government (DGov)', url: 'https://www.wa.gov.au/organisation/department-of-the-premier-and-cabinet/office-of-digital-government' },
+    ],
+    keywords: ['procurement', 'retroactive', 'off-the-shelf', 'DGov', 'advisory board', 'health', 'Curtin', 'Anthropic', 'MOU'],
   },
   NT: {
     name: 'Northern Territory',
@@ -686,31 +739,40 @@ const STATES = {
       '5 ethics principles alignment',
       'Risk-based tiers: low = agency decision, medium/high = AI advisory service review',
       'Mandatory for all NTG officers using or procuring AI',
+      'NT agencies also bound by DTA federal v2.0 (Dec 2025) for commonwealth-facing systems',
     ],
     privateSector: 'No direct mandate. Government procurement may set indirect standards.',
     funding: null, deadlines: [],
     correction: 'Note: Some sources cite June 2024 for the NT framework. June 2024 is the National framework date. The NT-specific framework was published November 2025.',
-    links: [{ label: 'Digital Territory', url: 'https://digitalterritory.nt.gov.au/' }],
+    links: [
+      { label: 'Digital Territory', url: 'https://digitalterritory.nt.gov.au/' },
+    ],
     keywords: ['remote', 'health', 'agriculture', 'defence', 'transport', 'talent'],
   },
   SA: {
     name: 'South Australia',
-    framework: 'Guideline 13.1 (GenAI/LLM) + Office for AI + AI Strategy (under development)',
-    date: 'Office for AI operational 2025. Guideline 13.1 pre-2025.',
+    framework: 'Guideline 13.1 (GenAI/LLM) + Office for AI + inaugural SA Government AI Strategy (in consultation)',
+    date: 'Office for AI operational 2025. Strategy consultation ran 29 Jan to 20 Feb 2026. Launch: 2026.',
     lead: 'Office for AI, Dept of Treasury and Finance. Director: Peter Meere (appointed Oct 2025).',
     status: 'advisory', maturity: 'medium', tier: 'grey',
-    scope: 'All SA Government agencies. Office covers healthcare, policing, social services, public admin.',
-    distinction: 'Advisory status but the most funded AI ecosystem at state level. AIML partnership with CSIRO since 2018.',
+    scope: 'All SA Government agencies. Strategy development covers public service delivery, economic growth, workforce, safety, ethics, accountability.',
+    distinction: 'Advisory status but the most funded AI ecosystem at state level. AIML partnership with CSIRO since 2018. Inaugural AI Strategy in active development via YourSAy public consultation (closed 20 Feb 2026), launch expected later in 2026.',
     mechanism: [
-      'Guideline-based (not mandatory yet)',
-      'Office for AI provides central coordination',
-      'AI Strategy launch expected 2026 (inaugural)',
+      'Guideline 13.1 governs GenAI/LLM use in SA public sector (current baseline)',
+      'Office for AI provides central coordination, operational 2025',
+      'Inaugural AI Strategy consultation closed 20 Feb 2026; launch expected 2026',
+      'Focus on improving customer service, freeing staff from repetitive tasks, smarter decisions across health/education/policing/social services',
+      'SA agencies also required to comply with DTA federal v2.0 (Dec 2025) for APS-aligned use',
     ],
-    privateSector: 'SME grants via Australian Institute for Machine Learning (AIML, to 2028). Active VC ecosystem.',
-    funding: '$28M AI Program + $20M RAIR Centre (CSIRO + Uni Adelaide) + $326.5M Digital Investment Fund (AI stream)',
-    deadlines: [{ label: '2026', text: 'Inaugural SA Government AI Strategy launch' }],
-    links: [{ label: 'SA Office for AI', url: 'https://ai.sa.gov.au/' }],
-    keywords: ['AIML', 'CSIRO', 'VC', 'funding', 'healthcare', 'guideline'],
+    privateSector: 'SME grants via Australian Institute for Machine Learning (AIML, to 2028). Active VC ecosystem. Public and businesses invited into strategy co-design via YourSAy.',
+    funding: '$28M AI Program (2025-26 state budget) + $20M RAIR Centre (CSIRO + Uni Adelaide) + $326.5M Digital Investment Fund (AI stream)',
+    deadlines: [{ label: '2026', text: 'Inaugural SA Government AI Strategy launch (post-consultation)' }],
+    links: [
+      { label: 'SA Office for AI', url: 'https://ai.sa.gov.au/' },
+      { label: 'YourSAy AI strategy consultation', url: 'https://yoursay.sa.gov.au/ai-for-sagov' },
+      { label: 'Premier SA: Peter Meere appointment', url: 'https://www.premier.sa.gov.au/media-releases/news-items/inaugural-director-of-the-office-for-ai' },
+    ],
+    keywords: ['AIML', 'CSIRO', 'VC', 'funding', 'healthcare', 'guideline', 'YourSAy', 'Peter Meere', 'strategy'],
   },
   QLD: {
     name: 'Queensland',
@@ -729,28 +791,36 @@ const STATES = {
     funding: 'Advance Queensland $650M overall. IndustryTech Fund $15M. Quantum Strategy $89.7M.',
     deadlines: [],
     auditNote: 'QAO Sep 2025 audit found governance gaps. TMR flagged for deploying AI traffic cameras without completing ethical risk assessments.',
-    links: [{ label: 'QLD AI Governance (QGEA)', url: 'https://www.forgov.qld.gov.au/information-technology/queensland-government-enterprise-architecture-qgea/qgea-directions-and-guidance/artificial-intelligence' }],
+    links: [
+      { label: 'QLD AI Governance (QGEA)', url: 'https://www.forgov.qld.gov.au/information-technology/queensland-government-enterprise-architecture-qgea/qgea-directions-and-guidance/artificial-intelligence' },
+      { label: 'FAIRA Framework', url: 'https://www.forgov.qld.gov.au/information-technology/queensland-government-enterprise-architecture-qgea/qgea-directions-and-guidance/qgea-policies-standards-and-guidelines/faira-framework' },
+    ],
     keywords: ['ISO 38507', 'FAIRA', 'audit', 'QAO', 'quantum'],
   },
   NSW: {
     name: 'New South Wales',
-    framework: 'NSW AI Assessment Framework (AIAF), Circular DCS-2024-04',
-    date: 'July 2024 (3rd iteration, first published 2022)',
+    framework: 'NSW AI Assessment Framework (AIAF), launched 27 January 2026',
+    date: '27 January 2026 (replaces 2022 AI Assurance Framework)',
     lead: 'NSW Office for AI (est. Sep 2025), Digital NSW, Dept of Customer Service',
     status: 'mandatory', maturity: 'high', tier: 'green',
-    scope: 'All NSW Government agencies. GenAI auto-classified as elevated risk.',
-    distinction: 'Most mature framework nationally with hard compliance deadlines. 30 June 2026 deadline for AI policy, governance, and supply chain risk management.',
+    scope: 'All NSW Government agencies across the full AI lifecycle. GenAI auto-classified as elevated risk.',
+    distinction: 'Most mature framework nationally. New 2026 AIAF is a 16-question mandatory tool aligned with the Commonwealth National Framework and EU AI Act. 30 June 2026 deadline for AI policy, governance, and supply chain risk management.',
     mechanism: [
-      'Gate-based 16-question risk assessment',
-      'Low-risk assessments completed in under 30 minutes',
+      '16-question mandatory risk assessment (new Jan 2026 AIAF)',
+      'Low-risk systems assessed in under 30 minutes',
+      'High-risk flagged for full review: Privacy Impact Assessment, Human Rights Impact Assessment, cybersecurity review',
       'High/Critical risk escalates to AI Review Committee (AIRC, chaired by Edward Santow)',
       'GenAI auto-classified as elevated risk',
     ],
     privateSector: 'AI Procurement Essentials + Australian Govt Model Clauses (17 Mar 2025). Vendors must meet published standards to contract with NSW government.',
     funding: '$20M emerging tech commercialisation, $3M Early Adopter Grants, $6M MVP Ventures',
     deadlines: [{ label: '30 June 2026', text: 'AI policy, governance framework, central AI inventory, supply chain risk management must be in place' }],
-    links: [{ label: 'NSW AI Assessment Framework', url: 'https://www.digital.nsw.gov.au/policy/artificial-intelligence' }],
-    keywords: ['AIAF', 'Edward Santow', 'GenAI', 'procurement', 'deadline', 'inventory'],
+    links: [
+      { label: 'NSW AIAF launch announcement (27 Jan 2026)', url: 'https://www.nsw.gov.au/departments-and-agencies/customer-service/media-releases/nsw-strengthens-ai-oversight-modernised-framework' },
+      { label: 'Digital NSW: AI Assessment Framework', url: 'https://www.digital.nsw.gov.au/policy/artificial-intelligence/ai-governance-assurance-and-frameworks/nsw-ai-assessment-framework' },
+      { label: 'Digital NSW AI Policy Hub', url: 'https://www.digital.nsw.gov.au/policy/artificial-intelligence' },
+    ],
+    keywords: ['AIAF', 'Edward Santow', 'GenAI', 'procurement', 'deadline', 'inventory', '2026'],
   },
   ACT: {
     name: 'Australian Capital Territory',
@@ -792,23 +862,28 @@ const STATES = {
   },
   TAS: {
     name: 'Tasmania',
-    framework: 'Guidance for AI in Tasmanian Government (v1.4, July 2024) + AI Island Strategy (announced Nov 2025)',
-    date: 'July 2024 (guidance). AI Island Strategy draft due H1 2026.',
-    lead: 'DDC AI Working Group (guidance). Dept of State Growth (strategy).',
+    framework: 'Guidance for AI in Tasmanian Government (v1.4, July 2024) + AI Island / Economic Diversification and Investment Strategy (draft H1 2026)',
+    date: 'July 2024 (guidance). AI Island Strategy announced Nov 2025. Draft strategy expected H1 2026.',
+    lead: 'DDC AI Working Group (guidance). Dept of State Growth + Tasmanian Development Board (strategy).',
     status: 'advisory', maturity: 'low', tier: 'grey',
-    scope: 'Tasmanian Government agencies (guidance). Broader economic scope planned via AI Island Strategy.',
-    distinction: 'Least developed framework nationally. Federal framework serves as primary reference. AI Island Strategy aims to leverage TDB loan book for business AI adoption.',
+    scope: 'Tasmanian Government agencies (guidance). Broader economic scope planned via AI Island Strategy: manufacturing, logistics, agriculture, resource management.',
+    distinction: 'Least developed regulatory framework nationally. Federal framework (DTA v2.0, NAIC AI6) serves as primary reference. AI Island / Economic Diversification Strategy leverages Tasmanian Development Board loan book to support business AI adoption, not a regulatory instrument.',
     mechanism: [
-      'Guidance document (not mandatory)',
-      'Federal framework used as primary reference',
-      'AI Island Strategy under development with TDB loan book',
-      'Legislative review of Tasmanian Development Act 1983 underway',
+      'Guidance document v1.4 (not mandatory)',
+      'Federal frameworks used as primary reference: DTA AI Policy v2.0 (Dec 2025), NAIC AI6 guidance (Oct 2025)',
+      'AI Island Strategy under development via State Growth + Tasmanian Development Board',
+      'Strategy targets manufacturing, logistics, agriculture, resource management',
+      'Legislative review of Tasmanian Development Act 1983 underway to support innovation investment',
     ],
-    privateSector: 'AI Island Strategy targets business AI adoption via loans. No current regulatory mandate.',
+    privateSector: 'AI Island / Economic Diversification Strategy targets business AI adoption via TDB loans and business support. No current state-level regulatory mandate; federal Privacy Act ADM and ACMA rules still apply.',
     funding: null,
-    deadlines: [{ label: 'H1 2026', text: 'AI Island Strategy draft expected' }],
-    links: [{ label: 'Tasmanian Government', url: 'https://www.tas.gov.au/' }],
-    keywords: ['AI Island', 'TDB', 'loans', 'guidance'],
+    deadlines: [{ label: 'H1 2026', text: 'Draft AI Island / Economic Diversification and Investment Strategy expected' }],
+    links: [
+      { label: 'AI Island announcement (Nov 2025)', url: 'https://www.premier.tas.gov.au/latest-news/2025/november/ai-island-driving-economic-growth-for-tasmanias-future' },
+      { label: 'Department of State Growth', url: 'https://www.stategrowth.tas.gov.au/' },
+      { label: 'State of the State 2026', url: 'https://www.premier.tas.gov.au/latest-news/2026/march/state-of-the-state-2026' },
+    ],
+    keywords: ['AI Island', 'TDB', 'loans', 'guidance', 'State Growth', 'Economic Diversification', 'manufacturing', 'agriculture'],
   },
 };
 
@@ -1328,7 +1403,7 @@ function buildDrawerDOM(data) {
   }
 
   var disc = document.createElement('div'); disc.className = 'd-disclaimer';
-  disc.textContent = 'This data is for informational purposes only. Compiled from publicly available government sources as of March 2026. Verify with official sources before making compliance decisions.';
+  disc.textContent = 'This data is for informational purposes only. Compiled from publicly available government sources. Last updated April 2026. Verify with official sources before making compliance decisions.';
   frag.appendChild(disc);
   return frag;
 }
@@ -1516,6 +1591,127 @@ world.controls().dampingFactor = 0.1;
     }
   }, { once: false, passive: true });
 });
+
+// ==================== DEADLINES (dynamic days-remaining) ====================
+// Source: knowledge/research/2026-04-22_au-ai-governance-deep-update.md
+var DEADLINES = [
+  { id: 'oaic',  date: '2026-06-05', label: '5 Jun 2026',  text: 'OAIC Children’s Privacy Code consultation closes', tier: 'urgent' },
+  { id: 'nsw',   date: '2026-06-30', label: '30 Jun 2026', text: 'NSW AIAF policy + inventory deadline',                 tier: 'urgent' },
+  { id: 'acma',  date: '2026-07-01', label: '1 Jul 2026',  text: 'ACMA AI-voice broadcasting disclosure',                  tier: 'soon' },
+  { id: 'eu',    date: '2026-08-02', label: '2 Aug 2026',  text: 'EU AI Act applies (extraterritorial)',                   tier: 'soon' },
+  { id: 'adm',   date: '2026-12-10', label: '10 Dec 2026', text: 'Privacy Act ADM transparency enforcement',               tier: 'later' },
+];
+
+function daysBetween(fromISO, toISO) {
+  var a = new Date(fromISO + 'T00:00:00Z');
+  var b = new Date(toISO   + 'T00:00:00Z');
+  return Math.round((b - a) / 86400000);
+}
+
+function todayISO() {
+  var d = new Date();
+  var m = String(d.getMonth() + 1).padStart(2, '0');
+  var day = String(d.getDate()).padStart(2, '0');
+  return d.getFullYear() + '-' + m + '-' + day;
+}
+
+function urgencyClass(days) {
+  if (days < 0) return 'passed';
+  if (days <= 45) return 'urgent';
+  if (days <= 120) return 'soon';
+  return 'later';
+}
+
+function daysPillText(days) {
+  if (days < 0) return 'Passed ' + Math.abs(days) + 'd ago';
+  if (days === 0) return 'Today';
+  if (days === 1) return '1 day left';
+  return days + ' days left';
+}
+
+function buildTimeline() {
+  var bar = document.getElementById('timelineBar');
+  if (!bar) return;
+  bar.textContent = '';
+  var t = todayISO();
+  DEADLINES.forEach(function(d) {
+    var days = daysBetween(t, d.date);
+    var cls = urgencyClass(days);
+    var item = document.createElement('div');
+    item.className = 'tl-item';
+    var dot = document.createElement('div');
+    dot.className = 'tl-dot ' + (cls === 'passed' ? 'later' : cls);
+    item.appendChild(dot);
+    var date = document.createElement('div');
+    date.className = 'tl-date'; date.textContent = d.label;
+    item.appendChild(date);
+    var text = document.createElement('div');
+    text.className = 'tl-text'; text.textContent = d.text;
+    item.appendChild(text);
+    var pill = document.createElement('div');
+    pill.className = 'tl-days ' + cls;
+    pill.textContent = daysPillText(days);
+    item.appendChild(pill);
+    bar.appendChild(item);
+  });
+}
+
+function paintFederalCardPills() {
+  var t = todayISO();
+  var pairs = [
+    ['fc-acma-pill', '2026-07-01'],
+    ['fc-oaic-pill', '2026-06-05'],
+    ['fc-adm-pill',  '2026-12-10'],
+    ['fc-eu-pill',   '2026-08-02'],
+  ];
+  pairs.forEach(function(p) {
+    var el = document.getElementById(p[0]);
+    if (!el) return;
+    var days = daysBetween(t, p[1]);
+    var cls = urgencyClass(days);
+    el.className = 'days-pill ' + cls;
+    el.textContent = daysPillText(days);
+  });
+}
+
+buildTimeline();
+paintFederalCardPills();
+
+// ==================== DEEP LINKS (?state=XX) ====================
+function applyDeepLink() {
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var s = (params.get('state') || '').toUpperCase();
+    if (s && STATES[s]) {
+      setTimeout(function() { openDrawer(s); }, 700);
+    }
+  } catch (err) { /* URLSearchParams unsupported: ignore */ }
+}
+
+// Update URL when drawer opens/closes so deep-link is shareable
+var _origOpenDrawer = openDrawer;
+openDrawer = function(stateId) {
+  _origOpenDrawer(stateId);
+  try {
+    var u = new URL(window.location.href);
+    u.searchParams.set('state', stateId);
+    window.history.replaceState({}, '', u.toString());
+  } catch (err) { /* ignore */ }
+};
+
+var _origCloseDrawer = closeDrawer;
+closeDrawer = function() {
+  _origCloseDrawer();
+  try {
+    var u = new URL(window.location.href);
+    u.searchParams.delete('state');
+    window.history.replaceState({}, '', u.toString());
+  } catch (err) { /* ignore */ }
+};
+// Rebind close button to the wrapped version
+document.getElementById('drawerClose').onclick = closeDrawer;
+
+applyDeepLink();
 
 </script>
 </body>
